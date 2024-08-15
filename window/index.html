@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RALLYHUB</title>
+
+        <link rel="stylesheet" href="./styles.css">
+    </head>
+
+    <body>
+        <div class="header">
+            <div class="title">
+                <div class="logo">RALLYHUB</div>
+                <div class="status"></div>
+            </div>
+            <div class="menu">
+                <div class="buttons">
+                    <button class="icon" action="">
+                        <img src="./assets/images/bug.svg">
+                    </button>
+                    <button class="icon" action="">
+                        <img src="./assets/images/question.svg">
+                    </button>
+                    <button class="icon" action="">
+                        <img src="./assets/images/github.svg">
+                    </button>
+                </div>
+                <div class="buttons">
+                    <button class="icon" action="window-minimize">
+                        <img src="./assets/images/minimize.svg">
+                    </button>
+                    <button class="icon red" action="window-close">
+                        <img src="./assets/images/xmark.svg">
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="settings">
+                <div class="setting game">
+                    <div class="title">Game</div>
+                    <select id="game">
+                        <option disabled selected>Select game</option>
+                        <option value="wrc23">EA SPORTS WRC</option>
+                        <option value="drt20">DIRT RALLY 2.0</option>
+                    </select>
+                </div>
+                <div class="setting voice">
+                    <div class="title">Selected voice</div>
+                    <div class="content">
+                        <button class="icon" action="voice-listen" disabled>
+                            <img src="./assets/images/listen.svg">
+                        </button>
+                        <div class="name">Not selected</div>
+                        <div class="language"></div>
+                        <div class="gender"></div>
+                        <div class="author"></div>
+                    </div>
+                </div>
+                <div class="setting volume">
+                    <div class="title">Volume</div>
+                    <div class="range">
+                        <input id="volume" type="range" min="0" max="100" step="1">
+                        <div class="value">50%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="voices">
+                <div class="title">Voices</div>
+                <div class="filters">
+                    <input id="search" type="text" class="search" placeholder="Name or author..." maxlength="96">
+                    <select id="language">
+                        <option value="any">Any language</option>
+                    </select>
+                    <select id="gender">
+                        <option value="any">Any gender</option>
+                        <option value="male">MALE</option>
+                        <option value="female">FEMALE</option>
+                    </select>
+                    <select id="author">
+                        <option value="any">Any author</option>
+                    </select>
+                    <button action="voices-load">Search</button>
+                </div>
+                <div class="list">
+                    <div class="row loading"></div>
+                    <div class="row loading"></div>
+                    <div class="row loading"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+    
+    <script type="module" src="./script.js"></script>
+    
+</html>
