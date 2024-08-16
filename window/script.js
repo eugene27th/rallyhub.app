@@ -75,7 +75,7 @@ const loadVoice = async function(voice_id) {
 
     audio.tracks = {};
 
-    for (let [key, value] of Object.entries(voice.audio)) {
+    for (let [key, value] of Object.entries(voice.tracks)) {
         audio.tracks[key] = new Audio(`data:audio/wav;base64,${value}`);
 
         audio.tracks[key].addEventListener(`ended`, function() {
@@ -155,9 +155,9 @@ const loadVoices = async function() {
 
 const listenVoice = async function(voice_id) {
     if (voice_id === config.voice) {
-        let tracks = Object.keys(audio.tracks);
+        let track_names = Object.keys(audio.tracks);
 
-        let track = audio.tracks[tracks[Math.floor(Math.random() * tracks.length)]];
+        let track = audio.tracks[track_names[Math.floor(Math.random() * track_names.length)]];
             track.volume = parseInt(config.volume) / 100;
             track.play();
     } else {
@@ -171,9 +171,9 @@ const listenVoice = async function(voice_id) {
             return false;
         };
 
-        let tracks = Object.keys(voice.audio);
+        let track_names = Object.keys(voice.tracks);
 
-        let track = new Audio(`data:audio/wav;base64,${voice.audio[tracks[Math.floor(Math.random() * tracks.length)]]}`);
+        let track = new Audio(`data:audio/wav;base64,${voice.tracks[track_names[Math.floor(Math.random() * track_names.length)]]}`);
             track.volume = parseInt(config.volume) / 100;
             track.play();
 
