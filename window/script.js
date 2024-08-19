@@ -245,7 +245,7 @@ document.querySelector(`button[action=window-minimize]`).addEventListener(`click
 
 
 window.electronAPI.onUpdateTelemetry(function(telemetry) {
-    let header = `${telemetry.route.location} - ${telemetry.route.name}`;
+    let header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}m`;
 
     if (elements.header.status.innerText !== header) {
         elements.header.status.innerText = header;
@@ -254,7 +254,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
     let distance = telemetry.stage.distance;
 
     let points = telemetry.route.pacenote.filter(function(point) {
-        return !audio.points.includes(point.distance) && (point.distance < (distance + 300) && point.distance > distance);
+        return !audio.points.includes(point.distance) && (point.distance > distance && point.distance < (distance + 2));
     });
 
     if (points.length < 1) {
@@ -263,23 +263,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
 
     let point = points[0];
 
-    if (audio.playlist.length > 0 && (point.distance - distance) > 10) {
-        return false;
-    };
-
-    audio.playlist = [];
     audio.points.push(point.distance);
-
-    if ((point.distance - distance) >= 100) {
-        let round = Math.round((point.distance - distance) / 10) * 10;
-
-        if (round > 150) {
-            round = Math.round(round / 50) * 50;
-        };
-
-        audio.playlist.push(round);
-    };
-
     audio.playlist = audio.playlist.concat(point.tracks);
 
     audio.tracks[audio.playlist[0]].volume = parseInt(config.volume) / 100;
