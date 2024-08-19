@@ -2,8 +2,7 @@ const { readFile, writeFile } = require(`fs/promises`);
 
 
 const wrc23 = async function() {
-    console.log(`installer > wrc23`);
-    return true;
+    console.log(`Installing WRC23...`);
 
     let config_file = await readFile(`${process.env[`USERPROFILE`]}/Documents/My Games/WRC/telemetry/config.json`).catch(function() {
         return false;
@@ -65,7 +64,7 @@ const wrc23 = async function() {
 };
 
 const drt20 = async function() {
-    console.log(`installer > drt20`);
+    console.log(`Installing DRT20...`);
     return true;
 };
 

@@ -32,6 +32,8 @@ let audio = {
     points: []
 };
 
+let route = 0;
+
 
 const editConfig = async function(data) {
     config = {
@@ -251,7 +253,16 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         elements.header.status.innerText = header;
     };
 
+    if (route !== telemetry.route.id) {
+        route = telemetry.route.id;
+        audio.points = [];
+    };
+
     let distance = telemetry.stage.distance;
+
+    if (distance < 0 && audio.points.length > 1) {
+        audio.points = [];
+    };
 
     let points = telemetry.route.pacenote.filter(function(point) {
         return !audio.points.includes(point.distance) && (point.distance > distance && point.distance < (distance + 2));

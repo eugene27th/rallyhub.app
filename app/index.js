@@ -134,23 +134,23 @@ socket.on(`message`, async function (message){
 
     const telemetry = parser[globalThis.config.game](message);
 
-    let route_id;
+    let ingame_id;
 
     if (globalThis.config.game === `wrc23`) {
         if (!telemetry.packet_4cc) {
             return false;
         };
 
-        route_id = telemetry.stage.id;
+        ingame_id = telemetry.stage.id;
     } else if (globalThis.config.name === `drt20`) {
         if (telemetry.packet_4cc) {
             return false;
         };
 
-        route_id = telemetry.stage.length;
+        ingame_id = telemetry.stage.length;
     };
 
-    let route = await getRoute(globalThis.config.game, route_id);
+    let route = await getRoute(globalThis.config.game, ingame_id);
 
     if (!route) {
         return false;
@@ -158,6 +158,7 @@ socket.on(`message`, async function (message){
 
     globalThis.window.webContents.send(`telemetry`, {
         route: {
+            id: route.id,
             location: route.location,
             name: route.name,
             pacenote: route.pacenote
