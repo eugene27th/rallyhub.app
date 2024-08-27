@@ -1,8 +1,8 @@
 {
-    "name": "rallyhub",
+    "name": "rallyhub.codriver",
     "description": "Your best rally assistant.",
     "author": "eugene27th",
-    "version": "0.0.1",
+    "version": "0.1.1",
     "dependencies": {
         "binary-parser": "^2.2.1"
     },
@@ -17,7 +17,7 @@
         "electron-builder": "^24.13.3"
     },
     "build": {
-        "appId": "27thsquad.rallyhub",
+        "appId": "27thsquad.rallyhub.codriver",
         "files": [
             "!gitignore"
         ],

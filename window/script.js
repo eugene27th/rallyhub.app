@@ -64,12 +64,6 @@ const loadVoice = async function(voice_id) {
         return false;
     };
 
-    if (voice_id !== config.voice) {
-        await editConfig({
-            voice: voice_id
-        });
-    };
-
     elements.voice.name.innerText = voice.name;
     elements.voice.author.innerText = `by ${voice.author}`;
     elements.voice.language.innerText = voice.language.toUpperCase();
@@ -87,10 +81,7 @@ const loadVoice = async function(voice_id) {
 
             audio.playlist.splice(0, 1);
 
-            if (audio.playlist.length > 0) {
-                audio.tracks[audio.playlist[0]].volume = parseInt(config.volume) / 100;
-                audio.tracks[audio.playlist[0]].play();
-            };
+            playAudio();
         });
     };
 
@@ -185,6 +176,20 @@ const listenVoice = async function(voice_id) {
     };
 };
 
+const playAudio = function() {
+    if (audio.playlist.length < 1) {
+        return false;
+    };
+
+    if (!audio.tracks[audio.playlist[0]]) {
+        audio.playlist.splice(0, 1);
+        return playAudio();
+    };
+
+    audio.tracks[audio.playlist[0]].volume = parseInt(config.volume) / 100;
+    audio.tracks[audio.playlist[0]].play();
+};
+
 
 elements.settings.game.addEventListener(`change`, async function() {
     await editConfig({
@@ -225,6 +230,10 @@ elements.voices.list.addEventListener(`click`, async function(event) {
     };
 
     if (action === `voice-select`) {
+        await editConfig({
+            voice: voice_id
+        });
+
         await loadVoice(voice_id);
     };
 
@@ -260,7 +269,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
 
     let distance = telemetry.stage.distance;
 
-    if (distance < 0 && audio.points.length > 1) {
+    if (distance <= 0 && audio.points.length > 1) {
         audio.points = [];
     };
 
@@ -277,8 +286,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
     audio.points.push(point.distance);
     audio.playlist = audio.playlist.concat(point.tracks);
 
-    audio.tracks[audio.playlist[0]].volume = parseInt(config.volume) / 100;
-    audio.tracks[audio.playlist[0]].play();
+    playAudio();
 });
 
 
