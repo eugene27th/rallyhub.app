@@ -1,6 +1,8 @@
 const elements = {
     header: {
-        status: document.querySelector(`.header .title .status`)
+        status: document.querySelector(`.header .title .status`),
+        minimize: document.querySelector(`button[action=window-minimize]`),
+        close: document.querySelector(`button[action=window-close]`)
     },
     voice: {
         content: document.querySelector(`.settings .setting.voice .content`),
@@ -15,24 +17,28 @@ const elements = {
         author: document.getElementById(`author`),
         language: document.getElementById(`language`),
         gender: document.getElementById(`gender`),
+        load: document.querySelector(`button[action=voices-load]`),
         list: document.querySelector(`.voices .list`)
     },
     settings: {
         game: document.getElementById(`game`),
-        volume: document.getElementById(`volume`)
+        volume: document.getElementById(`volume`),
+        offset: document.getElementById(`offset`)
     }
 };
 
+let route_id = 0;
+let briefing = false;
+
 let config = await window.electronAPI.config.get();
-let voices_filters = await window.electronAPI.voices.filters();
 
 let audio = {
-    tracks: {},
+    voice: {},
+    element: new Audio(),
     playlist: [],
-    points: []
+    points: [],
+    preload: []
 };
-
-let route = 0;
 
 
 const editConfig = async function(data) {
@@ -44,54 +50,6 @@ const editConfig = async function(data) {
     await window.electronAPI.config.set(config); 
 };
 
-const loadVoice = async function(voice_id) {
-    elements.voice.content.classList.add(`loading`);
-
-    elements.voice.name.innerText = `Downloading...`;
-    elements.voice.author.innerText = ``;
-    elements.voice.language.innerText = ``;
-    elements.voice.gender.innerText = ``;
-
-    elements.voice.listen.disabled = true;
-
-    for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
-        button.disabled = true;
-    };
-
-    let voice = await window.electronAPI.voice.get(voice_id);
-
-    if (!voice) {
-        return false;
-    };
-
-    elements.voice.name.innerText = voice.name;
-    elements.voice.author.innerText = `by ${voice.author}`;
-    elements.voice.language.innerText = voice.language.toUpperCase();
-    elements.voice.gender.innerText = voice.gender.toUpperCase();
-
-    audio.tracks = {};
-
-    for (let [key, value] of Object.entries(voice.tracks)) {
-        audio.tracks[key] = new Audio(`data:audio/wav;base64,${value}`);
-
-        audio.tracks[key].addEventListener(`ended`, function() {
-            if (audio.playlist.length < 1) {
-                return false;
-            };
-
-            audio.playlist.splice(0, 1);
-
-            playAudio();
-        });
-    };
-
-    elements.voice.content.classList.remove(`loading`);
-    elements.voice.listen.disabled = false;
-
-    for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
-        button.disabled = false;
-    };
-};
 
 const loadVoices = async function() {
     elements.voices.list.innerHTML = ``;
@@ -146,48 +104,31 @@ const loadVoices = async function() {
     };
 };
 
-const listenVoice = async function(voice_id) {
-    if (voice_id === config.voice) {
-        let track_names = Object.keys(audio.tracks);
+const loadVoice = async function(voice_id) {
+    elements.voice.content.classList.add(`loading`);
 
-        let track = audio.tracks[track_names[Math.floor(Math.random() * track_names.length)]];
-            track.volume = parseInt(config.volume) / 100;
-            track.play();
-    } else {
-        for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
-            button.disabled = true;
-        };
+    elements.voice.name.innerText = `Downloading...`;
+    elements.voice.author.innerText = ``;
+    elements.voice.language.innerText = ``;
+    elements.voice.gender.innerText = ``;
 
-        let voice = await window.electronAPI.voice.get(voice_id);
+    elements.voice.listen.disabled = true;
 
-        if (!voice) {
-            return false;
-        };
+    audio.voice = await window.electronAPI.voice.get(voice_id);
 
-        let track_names = Object.keys(voice.tracks);
-
-        let track = new Audio(`data:audio/wav;base64,${voice.tracks[track_names[Math.floor(Math.random() * track_names.length)]]}`);
-            track.volume = parseInt(config.volume) / 100;
-            track.play();
-
-        for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
-            button.disabled = false;
-        };
-    };
-};
-
-const playAudio = function() {
-    if (audio.playlist.length < 1) {
+    if (!audio.voice) {
         return false;
     };
 
-    if (!audio.tracks[audio.playlist[0]]) {
-        audio.playlist.splice(0, 1);
-        return playAudio();
-    };
+    audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[`100`]}`);
 
-    audio.tracks[audio.playlist[0]].volume = parseInt(config.volume) / 100;
-    audio.tracks[audio.playlist[0]].play();
+    elements.voice.name.innerText = audio.voice.name;
+    elements.voice.author.innerText = `by ${audio.voice.author}`;
+    elements.voice.language.innerText = audio.voice.language.toUpperCase();
+    elements.voice.gender.innerText = audio.voice.gender.toUpperCase();
+
+    elements.voice.content.classList.remove(`loading`);
+    elements.voice.listen.disabled = false;
 };
 
 
@@ -205,9 +146,32 @@ elements.settings.volume.addEventListener(`input`, async function() {
     });
 });
 
+elements.settings.offset.addEventListener(`input`, async function() {
+    if (this.value < -200) {
+        this.value = -200;
+    };
+
+    if (this.value > 200) {
+        this.value = 200;
+    };
+
+    audio.points = [];
+    audio.playlist = [];
+
+    await editConfig({
+        offset: this.value
+    });
+});
+
 
 elements.voice.listen.addEventListener(`click`, async function() {
-    await listenVoice(config.voice);
+    let names = Object.keys(audio.voice.tracks);
+
+    audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
+    audio.element.load();
+
+    audio.element.volume = parseInt(config.volume) / 100;
+    await audio.element.play();
 });
 
 elements.voices.list.addEventListener(`click`, async function(event) {
@@ -222,11 +186,31 @@ elements.voices.list.addEventListener(`click`, async function(event) {
         return false;
     };
 
-    event.target.classList.add(`loading`);
-    event.target.parentElement.classList.add(`loading`);
+    if (config.voice !== voice_id && !audio.preload.includes(voice_id)) {
+        audio.preload.push(voice_id);
+
+        event.target.classList.add(`loading`);
+        event.target.parentElement.classList.add(`loading`);
+
+        for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
+            button.disabled = true;
+        };
+    };
 
     if (action === `voice-listen`) {
-        await listenVoice(voice_id);
+        let voice = await window.electronAPI.voice.get(voice_id);
+    
+        if (!voice) {
+            return false;
+        };
+    
+        let names = Object.keys(voice.tracks);
+    
+        audio.element.setAttribute(`src`, `data:audio/webm;base64,${voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
+        audio.element.load();
+    
+        audio.element.volume = parseInt(config.volume) / 100;
+        audio.element.play();
     };
 
     if (action === `voice-select`) {
@@ -239,19 +223,23 @@ elements.voices.list.addEventListener(`click`, async function(event) {
 
     event.target.classList.remove(`loading`);
     event.target.parentElement.classList.remove(`loading`);
+
+    for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
+        button.disabled = false;
+    };
 });
 
-
-document.querySelector(`button[action=voices-load]`).addEventListener(`click`, async function() {
+elements.voices.load.addEventListener(`click`, async function() {
     await loadVoices();
 });
 
-document.querySelector(`button[action=window-close]`).addEventListener(`click`, async function() {
-    await window.electronAPI.window.close();
+
+elements.header.minimize.addEventListener(`click`, async function() {
+    await window.electronAPI.window.minimize();
 });
 
-document.querySelector(`button[action=window-minimize]`).addEventListener(`click`, async function() {
-    await window.electronAPI.window.minimize();
+elements.header.close.addEventListener(`click`, async function() {
+    await window.electronAPI.window.close();
 });
 
 
@@ -262,31 +250,43 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         elements.header.status.innerText = header;
     };
 
-    if (route !== telemetry.route.id) {
-        route = telemetry.route.id;
-        audio.points = [];
-    };
-
     let distance = telemetry.stage.distance;
 
-    if (distance <= 0 && audio.points.length > 1) {
+    if (route_id !== telemetry.route.id || (distance <= 0 && audio.points.length > 1)) {
         audio.points = [];
+        audio.playlist = [];
+
+        route_id = telemetry.route.id;
+        briefing = false;
+    };
+
+    if (!briefing) {
+        if (distance <= 0) {
+            let briefing_point = telemetry.route.pacenote.find(function(point) {
+                return point.distance === -1;
+            });
+    
+            if (briefing_point) {
+                audio.points.push(briefing_point.distance);
+                audio.playlist = audio.playlist.concat(briefing_point.tracks);
+    
+                console.log(`playlist updated briefing: `, audio.playlist);
+            };
+        };
+
+        briefing = true;
     };
 
     let points = telemetry.route.pacenote.filter(function(point) {
-        return !audio.points.includes(point.distance) && (point.distance > distance && point.distance < (distance + 2));
+        return !audio.points.includes(point.distance) && ((point.distance + parseInt(config.offset)) > distance && (point.distance + parseInt(config.offset)) < (distance + 2));
     });
 
-    if (points.length < 1) {
-        return false;
+    if (points.length > 0) {
+        audio.points.push(points[0].distance);
+        audio.playlist = audio.playlist.concat(points[0].tracks);
+
+        console.log(`playlist updated point: `, audio.playlist);
     };
-
-    let point = points[0];
-
-    audio.points.push(point.distance);
-    audio.playlist = audio.playlist.concat(point.tracks);
-
-    playAudio();
 });
 
 
@@ -299,12 +299,16 @@ if (config.volume) {
     elements.settings.volume.nextElementSibling.innerText = `${config.volume}%`;
 };
 
+if (config.offset) {
+    elements.settings.offset.value = config.offset;
+};
+
 if (config.voice) {
     await loadVoice(config.voice);
 };
 
 
-for (const author of voices_filters.authors) {
+for (const author of (await window.electronAPI.voices.filters()).authors) {
     let option = document.createElement(`option`);
         option.setAttribute(`value`, author);
         option.innerText = author;
@@ -312,7 +316,7 @@ for (const author of voices_filters.authors) {
     elements.voices.author.append(option);
 };
 
-for (const language of voices_filters.languages) {
+for (const language of (await window.electronAPI.voices.filters()).languages) {
     let option = document.createElement(`option`);
         option.setAttribute(`value`, language);
         option.innerText = language.toUpperCase();
@@ -322,3 +326,20 @@ for (const language of voices_filters.languages) {
 
 
 await loadVoices();
+
+
+setInterval(function() {
+    if (audio.playlist.length < 1 || (audio.element.currentTime > 0 && !audio.element.ended)) {
+        return false;
+    };
+
+    if (audio.voice.tracks[audio.playlist[0]]) {
+        audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[audio.playlist[0]]}`);
+        audio.element.load();
+
+        audio.element.volume = parseInt(config.volume) / 100;
+        audio.element.play();
+
+        audio.playlist.splice(0, 1);
+    };
+}, 50);

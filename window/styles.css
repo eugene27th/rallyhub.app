@@ -157,7 +157,7 @@ select {
     }
 }
 
-input[type=text] {
+input[type=text], input[type=number] {
     height: 40px;
     padding: 0 20px;
     border: none;
@@ -170,6 +170,10 @@ input[type=text] {
 
     &:focus {
         outline: none;
+    }
+
+    &#offset {
+        width: 90px;
     }
 }
 
@@ -447,7 +451,7 @@ input[type=range] {
 
                 &.loading {
                     background: linear-gradient(90deg, var(--color-element) 25%, var(--color-button-hover) 37%, var(--color-element) 63%);         
-                    animation: row-loading 1.4s ease infinite;
+                    animation: row-loading 2s ease infinite;
                     background-size: 400% 100%;
                 }
 

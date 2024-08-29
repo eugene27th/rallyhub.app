@@ -1,7 +1,8 @@
 {
     "port": 20220,
     "path": "D:\\Projects\\GitHub\\rallyhub\\rallyhub",
-    "game": "drt20",
+    "game": "wrc23",
     "volume": "100",
-    "voice": "3"
+    "voice": "3",
+    "offset": "0"
 }

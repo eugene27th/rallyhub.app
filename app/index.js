@@ -173,7 +173,7 @@ app.whenReady().then(async function() {
     };
 
     globalThis.window = new BrowserWindow({
-        width: 1000,
+        width: 1100,
         height: 800,
         resizable: false,
         useContentSize: true,
