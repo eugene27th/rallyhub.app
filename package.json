@@ -1,23 +1,22 @@
 {
-    "name": "rallyhub.codriver",
-    "description": "Your best rally assistant.",
+    "name": "rallyhub.basic",
     "author": "eugene27th",
-    "version": "0.1.1",
-    "dependencies": {
-        "binary-parser": "^2.2.1"
-    },
+    "version": "0.0.0",
     "main": "./app/index.js",
     "scripts": {
         "start": "electron .",
         "pack": "electron-builder --dir",
         "dist": "electron-builder"
     },
+    "dependencies": {
+        "binary-parser": "^2.2.1"
+    },
     "devDependencies": {
         "electron": "^29.1.4",
         "electron-builder": "^24.13.3"
     },
     "build": {
-        "appId": "27thsquad.rallyhub.codriver",
+        "appId": "27thsquad.rallyhub.basic",
         "files": [
             "!gitignore"
         ],

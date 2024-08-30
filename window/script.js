@@ -37,7 +37,7 @@ let audio = {
     element: new Audio(),
     playlist: [],
     points: [],
-    preload: []
+    voices: []
 };
 
 
@@ -120,6 +120,10 @@ const loadVoice = async function(voice_id) {
         return false;
     };
 
+    if (!audio.voices.includes(audio.voice.id)) {
+        audio.voices.push(audio.voice.id);
+    };
+
     audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[`100`]}`);
 
     elements.voice.name.innerText = audio.voice.name;
@@ -186,8 +190,8 @@ elements.voices.list.addEventListener(`click`, async function(event) {
         return false;
     };
 
-    if (config.voice !== voice_id && !audio.preload.includes(voice_id)) {
-        audio.preload.push(voice_id);
+    if (config.voice !== voice_id && !audio.voices.includes(voice_id)) {
+        audio.voices.push(voice_id);
 
         event.target.classList.add(`loading`);
         event.target.parentElement.classList.add(`loading`);

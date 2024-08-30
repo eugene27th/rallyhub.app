@@ -1,12 +1,14 @@
-globalThis.config = require(`../config.json`);
-
 const parser = require(`./parser`);
 const installer = require(`./installer`);
 const socket = require(`dgram`).createSocket(`udp4`);
 
 const { writeFile } = require(`fs/promises`);
-const { join: pathJoin } = require(`node:path`);
 const { app, BrowserWindow, ipcMain } = require(`electron/main`);
+
+
+globalThis.path = app.getAppPath(); // start
+// globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
+globalThis.config = require(`${globalThis.path}/config.json`);
 
 
 ipcMain.handle(`config:get`, function(event) {
@@ -32,7 +34,7 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 
     globalThis.voices.requesting = true;
 
-    let response = await fetch(`https://api.rallyhub.ru/voice/${voice_id}/get`, {
+    let response = await fetch(`https://api.rallyhub.ru/voice/${voice_id}`, {
         method: `GET`
     }).catch(function() {
         return null;
@@ -50,13 +52,13 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 });
 
 ipcMain.handle(`voices:get`, async function(event, options) {
-    let response = await fetch(`https://api.rallyhub.ru/voices/get${options ? `?${new URLSearchParams(options)}` : ``}`, {
+    let response = await fetch(`https://api.rallyhub.ru/voices${options ? `?${new URLSearchParams(options)}` : ``}`, {
         method: `GET`
     }).catch(function() {
         return [];
     });
 
-    if (!response || response.status != 200) {
+    if (!response || response.status !== 200) {
         return [];
     };
 
@@ -70,7 +72,7 @@ ipcMain.handle(`voices:filters:get`, async function(event) {
         return [];
     });
 
-    if (!response || response.status != 200) {
+    if (!response || response.status !== 200) {
         return [];
     };
 
@@ -122,7 +124,7 @@ socket.on(`message`, async function (message){
     if (globalThis.routes.list[route_key] === undefined) {
         globalThis.routes.requesting = true;
 
-        let response = await fetch(`https://api.rallyhub.ru/route/${globalThis.config.game}/${ingame_id}/get`, {
+        let response = await fetch(`https://api.rallyhub.ru/route/${globalThis.config.game}/${ingame_id}`, {
             method: `GET`
         }).catch(function() {
             return null;
@@ -156,8 +158,28 @@ socket.bind(globalThis.config.port || 20220);
 
 
 app.whenReady().then(async function() {
-    globalThis.config.path = __dirname.slice(0, -4);
+    let latest_version = (await (await fetch(`https://api.rallyhub.ru/app/version/latest`, {
+        method: `GET`
+    }).catch(function() {
+        return null;
+    })).json())?.basic;
 
+    if (latest_version && globalThis.config.version !== latest_version) {
+        let response = await fetch(`https://cdn.rallyhub.ru/resources/basic.asar`).catch(function() {
+            return null;
+        });
+
+        if (response && response.status === 200) {
+            globalThis.config.version = latest_version;
+
+            await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4));
+            await writeFile(`${globalThis.path}/resources/app.asar`, Buffer.from(await response.arrayBuffer()));
+
+            app.relaunch();
+            app.exit();
+        };
+    };
+    
     if (globalThis.config.game) {
         await installer[globalThis.config.game]();
     };
@@ -178,10 +200,10 @@ app.whenReady().then(async function() {
         resizable: false,
         useContentSize: true,
         titleBarStyle: `hidden`,
-        icon: `${globalThis.config.path}/icon.png`,
+        icon: `${app.getAppPath()}/icon.png`,
         webPreferences: {
             nodeIntegration: true,
-            preload: pathJoin(__dirname, `../window/preload.js`)
+            preload: `${app.getAppPath()}/window/preload.js`
         }
     });
 
@@ -191,7 +213,7 @@ app.whenReady().then(async function() {
     globalThis.window.removeMenu();
 
     globalThis.window.on(`closed`, async function() {
-        await writeFile(pathJoin(__dirname, `../config.json`), JSON.stringify(globalThis.config, null, 4));
+        await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4));
         app.quit();
     });
 });
