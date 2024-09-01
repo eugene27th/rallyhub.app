@@ -343,7 +343,7 @@ setInterval(function() {
 
         audio.element.volume = parseInt(config.volume) / 100;
         audio.element.play();
-
-        audio.playlist.splice(0, 1);
     };
+
+    audio.playlist.splice(0, 1);
 }, 50);
