@@ -7,6 +7,11 @@ const { writeFile } = require(`fs/promises`);
 const { app, BrowserWindow, ipcMain } = require(`electron/main`);
 
 
+if (!app.requestSingleInstanceLock()) {
+    return app.quit();
+};
+
+
 globalThis.path = app.getAppPath(); // start
 // globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
 globalThis.config = require(`${globalThis.path}/config.json`);
@@ -37,19 +42,19 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 
     let url = `https://api.rallyhub.ru/voice/${voice_id}`;
 
-    log.info(`[CODE: APP_INDEX_FETCH] [GET: ${url}]`);
+    log.info(`[CODE: BASIC_INDEX_FETCH] [GET: ${url}]`);
 
     let response = await fetch(url, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: APP_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
         return null;
     });
 
     if (response && response.status === 200) {
         globalThis.voices.list[voice_id] = await response.json();
     } else {
-        log.error(`[CODE: APP_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
         globalThis.voices.list[voice_id] = null;
     };
 
@@ -61,17 +66,17 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 ipcMain.handle(`voices:get`, async function(event, options) {
     let url = `https://api.rallyhub.ru/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
 
-    log.info(`[CODE: APP_INDEX_FETCH] [GET: ${url}]`);
+    log.info(`[CODE: BASIC_INDEX_FETCH] [GET: ${url}]`);
 
     let response = await fetch(url, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: APP_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
         return [];
     });
 
     if (!response || response.status !== 200) {
-        log.error(`[CODE: APP_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
         return [];
     };
 
@@ -84,12 +89,12 @@ ipcMain.handle(`voices:filters:get`, async function(event) {
     let response = await fetch(url, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: APP_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
         return [];
     });
 
     if (!response || response.status !== 200) {
-        log.error(`[CODE: APP_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
         return [];
     };
 
@@ -143,19 +148,19 @@ socket.on(`message`, async function (message){
 
         let url = `https://api.rallyhub.ru/route/${globalThis.config.game}/${ingame_id}`;
 
-        log.info(`[CODE: APP_INDEX_FETCH] [GET: ${url}]`);
+        log.info(`[CODE: BASIC_INDEX_FETCH] [GET: ${url}]`);
 
         let response = await fetch(url, {
             method: `GET`
         }).catch(function() {
-            log.error(`[CODE: APP_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+            log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
             return null;
         });
 
         if (response && response.status === 200) {
             globalThis.routes.list[route_key] = await response.json();
         } else {
-            log.error(`[CODE: APP_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+            log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
             globalThis.routes.list[route_key] = null;
         };
     
@@ -186,7 +191,7 @@ app.whenReady().then(async function() {
     });
     
     if (restart) {
-        await log.info(`[CODE: APP_INDEX_RESTART_AFTER_UPDATE]`);
+        await log.info(`[CODE: BASIC_INDEX_RESTART_AFTER_UPDATE]`);
 
         app.relaunch();
         app.exit();
@@ -225,12 +230,24 @@ app.whenReady().then(async function() {
     globalThis.window.removeMenu();
 
     globalThis.window.on(`closed`, async function() {
+        log.info(`[CODE: BASIC_INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
+
         await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function() {
-            log.error(`[CODE: APP_INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
+            log.error(`[CODE: BASIC_INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
         });
 
         app.quit();
     });
+});
+
+app.on(`second-instance`, function() {
+    if (globalThis.window) {
+        if (globalThis.window.isMinimized()) {
+            globalThis.window.restore();
+        };
+
+        return globalThis.window.focus();
+    };
 });
 
 app.on(`window-all-closed`, function() {
