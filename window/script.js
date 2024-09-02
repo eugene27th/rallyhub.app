@@ -274,7 +274,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
                 audio.points.push(briefing_point.distance);
                 audio.playlist = audio.playlist.concat(briefing_point.tracks);
     
-                console.log(`playlist updated briefing: `, audio.playlist);
+                // console.log(`playlist updated from briefing: `, audio.playlist);
             };
         };
 
@@ -289,7 +289,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         audio.points.push(points[0].distance);
         audio.playlist = audio.playlist.concat(points[0].tracks);
 
-        console.log(`playlist updated point: `, audio.playlist);
+        // console.log(`playlist updated from point: `, audio.playlist);
     };
 });
 

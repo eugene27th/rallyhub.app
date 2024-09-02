@@ -12,8 +12,8 @@ if (!app.requestSingleInstanceLock()) {
 };
 
 
-globalThis.path = app.getAppPath(); // start
-// globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
+// globalThis.path = app.getAppPath(); // start
+globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
 globalThis.config = require(`${globalThis.path}/config.json`);
 
 
@@ -22,10 +22,6 @@ ipcMain.handle(`config:get`, function(event) {
 });
 
 ipcMain.handle(`config:set`, async function(event, new_config) {
-    if (globalThis.config.game !== new_config.game) {
-        await installer[new_config.game]();
-    };
-
     globalThis.config = new_config;
 });
 
@@ -42,19 +38,19 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 
     let url = `https://api.rallyhub.ru/voice/${voice_id}`;
 
-    log.info(`[CODE: BASIC_INDEX_FETCH] [GET: ${url}]`);
+    log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
     let response = await fetch(url, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+        log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
         return null;
     });
 
     if (response && response.status === 200) {
         globalThis.voices.list[voice_id] = await response.json();
     } else {
-        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+        log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
         globalThis.voices.list[voice_id] = null;
     };
 
@@ -66,17 +62,17 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 ipcMain.handle(`voices:get`, async function(event, options) {
     let url = `https://api.rallyhub.ru/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
 
-    log.info(`[CODE: BASIC_INDEX_FETCH] [GET: ${url}]`);
+    log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
     let response = await fetch(url, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+        log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
         return [];
     });
 
     if (!response || response.status !== 200) {
-        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+        log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
         return [];
     };
 
@@ -89,12 +85,12 @@ ipcMain.handle(`voices:filters:get`, async function(event) {
     let response = await fetch(url, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+        log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
         return [];
     });
 
     if (!response || response.status !== 200) {
-        log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+        log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
         return [];
     };
 
@@ -148,19 +144,19 @@ socket.on(`message`, async function (message){
 
         let url = `https://api.rallyhub.ru/route/${globalThis.config.game}/${ingame_id}`;
 
-        log.info(`[CODE: BASIC_INDEX_FETCH] [GET: ${url}]`);
+        log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
         let response = await fetch(url, {
             method: `GET`
         }).catch(function() {
-            log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+            log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
             return null;
         });
 
         if (response && response.status === 200) {
             globalThis.routes.list[route_key] = await response.json();
         } else {
-            log.error(`[CODE: BASIC_INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+            log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
             globalThis.routes.list[route_key] = null;
         };
     
@@ -187,19 +183,19 @@ socket.bind(globalThis.config.port || 20220);
 
 app.whenReady().then(async function() {
     let restart = await installer.app().catch(function() {
+        log.error(`[CODE: INDEX_INSTALL_APP]`);
         return false;
     });
     
     if (restart) {
-        await log.info(`[CODE: BASIC_INDEX_RESTART_AFTER_UPDATE]`);
+        await log.info(`[CODE: INDEX_RESTART_AFTER_UPDATE]`);
 
         app.relaunch();
         app.exit();
     };
 
-    if (globalThis.config.game) {
-        await installer[globalThis.config.game]();
-    };
+    await installer.wrc23();
+    await installer.drt20();
 
     globalThis.routes = {
         requesting: false,
@@ -226,14 +222,14 @@ app.whenReady().then(async function() {
 
     globalThis.window.loadFile(`./window/index.html`);
 
-    globalThis.window.webContents.openDevTools({ activate: false });
+    // globalThis.window.webContents.openDevTools({ activate: false });
     globalThis.window.removeMenu();
 
     globalThis.window.on(`closed`, async function() {
-        log.info(`[CODE: BASIC_INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
+        log.info(`[CODE: INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
 
-        await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function() {
-            log.error(`[CODE: BASIC_INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
+        await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
+            log.error(`[CODE: INDEX_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/config.json]`);
         });
 
         app.quit();

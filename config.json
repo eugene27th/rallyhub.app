@@ -1,9 +1,6 @@
 {
     "version": "0.1.0",
-    "path": "D:\\Projects\\GitHub\\rallyhub\\rallyhub",
     "port": 20220,
-    "game": "wrc23",
     "volume": "50",
-    "voice": "2",
     "offset": "0"
 }
