@@ -3,6 +3,34 @@ const log = require(`./logger`);
 const { readFile, writeFile } = require(`fs/promises`);
 
 
+const getDocumentsPath = function() {
+    try {
+        let path = (require('child_process').execSync(`chcp 65001 & reg query "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" /v Personal`))
+            .toString(`utf-8`)
+            .replaceAll(`\r\n`, ``)
+            .split(`    `)
+            .slice(3)
+            .join(`    `);
+
+        const matches = path.match(/%[^%]+%/g);
+
+        if (matches) {
+            for (let match of matches) {
+                path = path.replace(match, process.env[match.substr(1, match.length - 2)]);
+            };
+        };
+
+        log.info(`[CODE: INSTALLER_DOCUMENTS_PATH] [PATH: ${path}]`);
+
+        return path;
+    } catch (error) {
+        log.error(`[CODE: INSTALLER_DOCUMENTS_PATH]`);
+
+        return `${process.env[`USERPROFILE`]}/Documents`;
+    };
+};
+
+
 const app = async function() {
     log.info(`[CODE: INDEX_FETCH] [GET: https://api.rallyhub.ru/app/version/latest]`);
 
@@ -56,7 +84,9 @@ const app = async function() {
 const wrc23 = async function() {
     log.info(`[CODE: INSTALLER_WRC23_INIT]`);
 
-    let config_file_path = `${process.env[`USERPROFILE`]}/Documents/My Games/WRC/telemetry/config.json`;
+    let config_file_path = `${getDocumentsPath()}/My Games/WRC/telemetry/config.json`;
+
+    log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${config_file_path}]`);
 
     let config_file = await readFile(config_file_path).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
@@ -87,7 +117,9 @@ const wrc23 = async function() {
         });
     };
 
-    let structure_file_path = `${process.env[`USERPROFILE`]}/Documents/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
+    let structure_file_path = `${getDocumentsPath()}/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
+
+    log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${structure_file_path}]`);
 
     let structure_file = await readFile(structure_file_path).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${structure_file_path}]`);
@@ -134,7 +166,9 @@ const wrc23 = async function() {
 const drt20 = async function() {
     log.info(`[CODE: INSTALLER_DRT20_INIT]`);
 
-    let config_file_path = `${process.env[`USERPROFILE`]}/Documents/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
+    let config_file_path = `${getDocumentsPath()}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
+
+    log.info(`[CODE: INSTALLER_DRT20_READFILE] [PATH: ${config_file_path}]`);
 
     let config_file = await readFile(config_file_path, { encoding: `utf8` }).catch(function(error) {
         log.error(`[CODE: INSTALLER_DRT20_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);

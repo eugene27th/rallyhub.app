@@ -216,6 +216,7 @@ app.whenReady().then(async function() {
         icon: `${app.getAppPath()}/icon.png`,
         webPreferences: {
             nodeIntegration: true,
+            backgroundThrottling: false,
             preload: `${app.getAppPath()}/window/preload.js`
         }
     });
