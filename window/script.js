@@ -27,9 +27,6 @@ const elements = {
     }
 };
 
-let route_id = 0;
-let briefing = false;
-
 let config = await window.electronAPI.config.get();
 
 let audio = {
@@ -37,7 +34,21 @@ let audio = {
     element: new Audio(),
     playlist: [],
     points: [],
-    voices: []
+    preloaded: []
+};
+
+let route = {
+    id: 0,
+    briefing: false
+};
+
+let vehicle = {
+    tyre_state: {
+        fl: 0,
+        fr: 0,
+        rl: 0,
+        rr: 0
+    }
 };
 
 
@@ -120,8 +131,8 @@ const loadVoice = async function(voice_id) {
         return false;
     };
 
-    if (!audio.voices.includes(audio.voice.id)) {
-        audio.voices.push(audio.voice.id);
+    if (!audio.preloaded.includes(audio.voice.id)) {
+        audio.preloaded.push(audio.voice.id);
     };
 
     audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[`100`]}`);
@@ -190,8 +201,8 @@ elements.voices.list.addEventListener(`click`, async function(event) {
         return false;
     };
 
-    if (config.voice !== voice_id && !audio.voices.includes(voice_id)) {
-        audio.voices.push(voice_id);
+    if (config.voice !== voice_id && !audio.preloaded.includes(voice_id)) {
+        audio.preloaded.push(voice_id);
 
         event.target.classList.add(`loading`);
         event.target.parentElement.classList.add(`loading`);
@@ -256,15 +267,22 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
 
     let distance = telemetry.stage.distance;
 
-    if (route_id !== telemetry.route.id || (distance <= 0 && audio.points.length > 1)) {
+    if (route.id !== telemetry.route.id || (distance <= 0 && audio.points.length > 1)) {
         audio.points = [];
         audio.playlist = [];
 
-        route_id = telemetry.route.id;
-        briefing = false;
+        route.id = telemetry.route.id;
+        route.briefing = false;
+
+        vehicle.tyre_state = {
+            fl: 0,
+            fr: 0,
+            rl: 0,
+            rr: 0
+        };
     };
 
-    if (!briefing) {
+    if (!route.briefing) {
         if (distance <= 0) {
             let briefing_point = telemetry.route.pacenote.find(function(point) {
                 return point.distance === -1;
@@ -273,12 +291,10 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
             if (briefing_point) {
                 audio.points.push(briefing_point.distance);
                 audio.playlist = audio.playlist.concat(briefing_point.tracks);
-    
-                // console.log(`playlist updated from briefing: `, audio.playlist);
             };
         };
 
-        briefing = true;
+        route.briefing = true;
     };
 
     let points = telemetry.route.pacenote.filter(function(point) {
@@ -288,8 +304,16 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
     if (points.length > 0) {
         audio.points.push(points[0].distance);
         audio.playlist = audio.playlist.concat(points[0].tracks);
+    };
 
-        // console.log(`playlist updated from point: `, audio.playlist);
+    for (let [tyre, state] of Object.entries(telemetry.vehicle.tyre_state)) {
+        if (vehicle.tyre_state[tyre] !== state) {
+            if (state === 1 || (state === 2 && vehicle.tyre_state[tyre] !== 1)) {
+                audio.playlist.push(`puncture_${tyre}`);
+            };
+
+            vehicle.tyre_state[tyre] = state;
+        };
     };
 });
 

@@ -10,7 +10,14 @@ const wrc23 = function(buffer) {
         .floatle(`stage_progress`)
         .uint16le(`route_id`)
         .floatle(`vehicle_speed`)
-
+        .uint8(`vehicle_tyre_state_bl`)
+        .uint8(`vehicle_tyre_state_br`)
+        .uint8(`vehicle_tyre_state_fl`)
+        .uint8(`vehicle_tyre_state_fr`)
+        .floatle(`vehicle_brake_temperature_bl`)
+        .floatle(`vehicle_brake_temperature_br`)
+        .floatle(`vehicle_brake_temperature_fl`)
+        .floatle(`vehicle_brake_temperature_fr`)
         .parse(buffer);
         
 
@@ -27,7 +34,19 @@ const wrc23 = function(buffer) {
             stage: parsed.stage_current_time
         },
         vehicle: {
-            speed: parsed.vehicle_speed * 3.6
+            speed: parsed.vehicle_speed * 3.6,
+            brake_temp: {
+                fl: parsed.vehicle_brake_temperature_fl,
+                fr: parsed.vehicle_brake_temperature_fr,
+                rl: parsed.vehicle_brake_temperature_bl,
+                rr: parsed.vehicle_brake_temperature_br
+            },
+            tyre_state: {
+                fl: parsed.vehicle_tyre_state_fl,
+                fr: parsed.vehicle_tyre_state_fr,
+                rl: parsed.vehicle_tyre_state_bl,
+                rr: parsed.vehicle_tyre_state_br
+            }
         }
     };
 };

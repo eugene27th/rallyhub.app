@@ -149,7 +149,15 @@ const wrc23 = async function() {
                         `stage_current_time`,
                         `stage_progress`,
                         `route_id`,
-                        `vehicle_speed`
+                        `vehicle_speed`,
+                        `vehicle_tyre_state_bl`,
+                        `vehicle_tyre_state_br`,
+                        `vehicle_tyre_state_fl`,
+                        `vehicle_tyre_state_fr`,
+                        `vehicle_brake_temperature_bl`,
+                        `vehicle_brake_temperature_br`,
+                        `vehicle_brake_temperature_fl`,
+                        `vehicle_brake_temperature_fr`
                     ]
                 }
             ]
