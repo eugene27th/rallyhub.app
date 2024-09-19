@@ -306,13 +306,15 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         audio.playlist = audio.playlist.concat(points[0].tracks);
     };
 
-    for (let [tyre, state] of Object.entries(telemetry.vehicle.tyre_state)) {
-        if (vehicle.tyre_state[tyre] !== state) {
-            if (state === 1 || (state === 2 && vehicle.tyre_state[tyre] !== 1)) {
-                audio.playlist.push(`puncture_${tyre}`);
+    if (telemetry.vehicle?.tyre_state) {
+        for (let [tyre, state] of Object.entries(telemetry.vehicle.tyre_state)) {
+            if (vehicle.tyre_state[tyre] !== state) {
+                if (state === 1 || (state === 2 && vehicle.tyre_state[tyre] !== 1)) {
+                    audio.playlist.push(`puncture_${tyre}`);
+                };
+    
+                vehicle.tyre_state[tyre] = state;
             };
-
-            vehicle.tyre_state[tyre] = state;
         };
     };
 });
