@@ -282,6 +282,10 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         };
     };
 
+    if (!telemetry.route.pacenote) {
+        return false;
+    };
+
     if (!route.briefing) {
         if (distance <= 0) {
             let briefing_point = telemetry.route.pacenote.find(function(point) {
