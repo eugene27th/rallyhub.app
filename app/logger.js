@@ -1,4 +1,4 @@
-const { writeFile, readFile, appendFile } = require(`fs/promises`);
+const fs = require(`fs/promises`);
 
 
 const log = async function(message) {
@@ -35,7 +35,7 @@ const log = async function(message) {
     let path = `${globalThis.path}/app.log`;
     let row = `[${D}.${M}.${Y} ${h}:${m}:${s}Z] ${message}\n`;
 
-    let file = await readFile(path, { encoding: `utf8` }).catch(function() {
+    let file = await fs.readFile(path, { encoding: `utf8` }).catch(function() {
         return null;
     });
 
@@ -44,11 +44,11 @@ const log = async function(message) {
 
         if (rows.length > 1000) {
             rows.push(row);
-            return await writeFile(path, rows.slice(50).join(`\n`));
+            return await fs.writeFile(path, rows.slice(50).join(`\n`));
         };
     };
 
-    return await appendFile(path, row);
+    return await fs.appendFile(path, row);
 };
 
 const info = async function(message) {

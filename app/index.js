@@ -1,9 +1,10 @@
 const log = require(`./logger`);
+const utils = require(`./utils`);
+const fs = require(`fs/promises`);
 const parser = require(`./parser`);
 const installer = require(`./installer`);
 const socket = require(`dgram`).createSocket(`udp4`);
 
-const { writeFile } = require(`fs/promises`);
 const { app, BrowserWindow, ipcMain } = require(`electron/main`);
 
 
@@ -40,7 +41,7 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 
     log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
-    let response = await fetch(url, {
+    let response = await utils.fetcha(url, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -64,7 +65,7 @@ ipcMain.handle(`voices:get`, async function(event, options) {
 
     log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
-    let response = await fetch(url, {
+    let response = await utils.fetcha(url, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -82,7 +83,7 @@ ipcMain.handle(`voices:get`, async function(event, options) {
 ipcMain.handle(`voices:filters:get`, async function(event) {
     let url = `https://api.rallyhub.ru/voices/filters`;
 
-    let response = await fetch(url, {
+    let response = await utils.fetcha(url, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -146,7 +147,7 @@ socket.on(`message`, async function (message){
 
         log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
-        let response = await fetch(url, {
+        let response = await utils.fetcha(url, {
             method: `GET`
         }).catch(function() {
             log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -229,7 +230,7 @@ app.whenReady().then(async function() {
     globalThis.window.on(`closed`, async function() {
         log.info(`[CODE: INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
 
-        await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
+        await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
             log.error(`[CODE: INDEX_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/config.json]`);
         });
 

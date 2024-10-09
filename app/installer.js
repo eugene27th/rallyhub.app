@@ -1,40 +1,12 @@
 const log = require(`./logger`);
-
-const { readFile, writeFile } = require(`fs/promises`);
-
-
-const getDocumentsPath = function() {
-    try {
-        let path = (require('child_process').execSync(`chcp 65001 & reg query "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" /v Personal`))
-            .toString(`utf-8`)
-            .replaceAll(`\r\n`, ``)
-            .split(`    `)
-            .slice(3)
-            .join(`    `);
-
-        const matches = path.match(/%[^%]+%/g);
-
-        if (matches) {
-            for (let match of matches) {
-                path = path.replace(match, process.env[match.substr(1, match.length - 2)]);
-            };
-        };
-
-        log.info(`[CODE: INSTALLER_DOCUMENTS_PATH] [PATH: ${path}]`);
-
-        return path;
-    } catch (error) {
-        log.error(`[CODE: INSTALLER_DOCUMENTS_PATH]`);
-
-        return `${process.env[`USERPROFILE`]}/Documents`;
-    };
-};
+const utils = require(`./utils`);
+const fs = require(`fs/promises`);
 
 
 const app = async function() {
     log.info(`[CODE: INDEX_FETCH] [GET: https://api.rallyhub.ru/app/version/latest]`);
 
-    let response_version = await fetch(`https://api.rallyhub.ru/app/version/latest`, {
+    let response_version = await utils.fetcha(`https://api.rallyhub.ru/app/version/latest`, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://api.rallyhub.ru/app/version/latest]`);
@@ -54,7 +26,7 @@ const app = async function() {
 
     log.info(`[CODE: INDEX_FETCH] [GET: https://cdn.rallyhub.ru/resources/basic.asar]`);
 
-    let response_resources = await fetch(`https://cdn.rallyhub.ru/resources/basic.asar`).catch(function() {
+    let response_resources = await utils.fetcha(`https://cdn.rallyhub.ru/resources/basic.asar`).catch(function() {
         log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://cdn.rallyhub.ru/resources/basic.asar]`);
         return null;
     });
@@ -68,13 +40,13 @@ const app = async function() {
 
     log.info(`[CODE: INSTALLER_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
 
-    await writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
+    await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/config.json]`);
     });
 
     log.info(`[CODE: INSTALLER_WRITEFILE] [PATH: ${globalThis.path}/resources/app.asar]`);
 
-    await writeFile(`${globalThis.path}/resources/app.asar`, Buffer.from(await response_resources.arrayBuffer())).catch(function(error) {
+    await fs.writeFile(`${globalThis.path}/resources/app.asar`, Buffer.from(await response_resources.arrayBuffer())).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/resources/app.asar]`);
     });
 
@@ -84,11 +56,11 @@ const app = async function() {
 const wrc23 = async function() {
     log.info(`[CODE: INSTALLER_WRC23_INIT]`);
 
-    let config_file_path = `${getDocumentsPath()}/My Games/WRC/telemetry/config.json`;
+    let config_file_path = `${utils.docpath()}/My Games/WRC/telemetry/config.json`;
 
     log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${config_file_path}]`);
 
-    let config_file = await readFile(config_file_path).catch(function(error) {
+    let config_file = await fs.readFile(config_file_path).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         return null;
     });
@@ -112,16 +84,16 @@ const wrc23 = async function() {
 
         log.info(`[CODE: INSTALLER_WRC23_WRITEFILE] [PATH: ${config_file_path}]`);
 
-        await writeFile(config_file_path, JSON.stringify(config, null, 4)).catch(function(error) {
+        await fs.writeFile(config_file_path, JSON.stringify(config, null, 4)).catch(function(error) {
             log.error(`[CODE: INSTALLER_WRC23_WRITEFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         });
     };
 
-    let structure_file_path = `${getDocumentsPath()}/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
+    let structure_file_path = `${utils.docpath()}/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
 
     log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${structure_file_path}]`);
 
-    let structure_file = await readFile(structure_file_path).catch(function(error) {
+    let structure_file = await fs.readFile(structure_file_path).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${structure_file_path}]`);
         return false;
     });
@@ -129,7 +101,7 @@ const wrc23 = async function() {
     if (!structure_file) {
         log.info(`[CODE: INSTALLER_WRC23_WRITEFILE] [PATH: ${structure_file_path}]`);
 
-        await writeFile(structure_file_path, JSON.stringify({
+        await fs.writeFile(structure_file_path, JSON.stringify({
             id: `rallyhub.basic`,
             versions: {
                 schema: 1,
@@ -174,11 +146,11 @@ const wrc23 = async function() {
 const drt20 = async function() {
     log.info(`[CODE: INSTALLER_DRT20_INIT]`);
 
-    let config_file_path = `${getDocumentsPath()}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
+    let config_file_path = `${utils.docpath()}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
 
     log.info(`[CODE: INSTALLER_DRT20_READFILE] [PATH: ${config_file_path}]`);
 
-    let config_file = await readFile(config_file_path, { encoding: `utf8` }).catch(function(error) {
+    let config_file = await fs.readFile(config_file_path, { encoding: `utf8` }).catch(function(error) {
         log.error(`[CODE: INSTALLER_DRT20_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         return null;
     });
@@ -193,7 +165,7 @@ const drt20 = async function() {
 
         log.info(`[CODE: INSTALLER_DRT20_WRITEFILE] [PATH: ${config_file_path}]`);
 
-        await writeFile(config_file_path, config).catch(function(error) {
+        await fs.writeFile(config_file_path, config).catch(function(error) {
             log.error(`[CODE: INSTALLER_DRT20_WRITEFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         });
     };
