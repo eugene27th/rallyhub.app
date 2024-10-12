@@ -114,6 +114,10 @@ socket.on(`message`, async function (message){
 
     const telemetry = parser[globalThis.config.game](message);
 
+    if (!telemetry) {
+        return false;
+    };
+
     let ingame_id;
 
     if (globalThis.config.game === `wrc23`) {
