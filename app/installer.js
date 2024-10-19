@@ -4,17 +4,17 @@ const fs = require(`fs/promises`);
 
 
 const app = async function() {
-    log.info(`[CODE: INDEX_FETCH] [GET: https://api.rallyhub.ru/app/version/latest]`);
+    log.info(`[CODE: INDEX_FETCH] [GET: https://api.${globalThis.domain}/app/version]`);
 
-    let response_version = await utils.fetcha(`https://api.rallyhub.ru/app/version/latest`, {
+    let response_version = await utils.fetcha(`https://api.${globalThis.domain}/app/version`, {
         method: `GET`
     }).catch(function() {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://api.rallyhub.ru/app/version/latest]`);
+        log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://api.${globalThis.domain}/app/version]`);
         return null;
     });
 
     if (!response_version || response_version.status !== 200) {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE_STATUS] [GET: https://api.rallyhub.ru/app/version/latest]`);
+        log.error(`[CODE: INSTALLER_FETCH_RESPONSE_STATUS] [GET: https://api.${globalThis.domain}/app/version]`);
         return false;
     };
 
@@ -24,15 +24,15 @@ const app = async function() {
         return false;
     };
 
-    log.info(`[CODE: INDEX_FETCH] [GET: https://cdn.rallyhub.ru/resources/basic.asar]`);
+    log.info(`[CODE: INDEX_FETCH] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
 
-    let response_resources = await utils.fetcha(`https://cdn.rallyhub.ru/resources/basic.asar`).catch(function() {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://cdn.rallyhub.ru/resources/basic.asar]`);
+    let response_resources = await utils.fetcha(`https://cdn.${globalThis.domain}/resources/basic.asar`).catch(function() {
+        log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
         return null;
     });
 
     if (!response_resources || response_resources.status !== 200) {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE_STATUS] [GET: https://cdn.rallyhub.ru/resources/basic.asar]`);
+        log.error(`[CODE: INSTALLER_FETCH_RESPONSE_STATUS] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
         return false;
     };
 

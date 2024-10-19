@@ -17,6 +17,7 @@ if (!app.requestSingleInstanceLock()) {
 // globalThis.path = app.getAppPath(); // start
 globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
 globalThis.config = require(`${globalThis.path}/config.json`);
+globalThis.domain = globalThis.config.domain || `rallyhub.ru`;
 
 
 ipcMain.handle(`config:get`, function(event) {
@@ -38,7 +39,7 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 
     globalThis.voices.requesting = true;
 
-    let url = `https://api.rallyhub.ru/voice/${voice_id}`;
+    let url = `https://api.${globalThis.domain}/voice/${voice_id}`;
 
     log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
@@ -62,7 +63,7 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 });
 
 ipcMain.handle(`voices:get`, async function(event, options) {
-    let url = `https://api.rallyhub.ru/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
+    let url = `https://api.${globalThis.domain}/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
 
     log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
@@ -82,7 +83,7 @@ ipcMain.handle(`voices:get`, async function(event, options) {
 });
 
 ipcMain.handle(`voices:filters:get`, async function(event) {
-    let url = `https://api.rallyhub.ru/voices/filters`;
+    let url = `https://api.${globalThis.domain}/voices/filters`;
 
     let response = await utils.fetcha(url, {
         method: `GET`
@@ -152,7 +153,7 @@ socket.on(`message`, async function (message){
     if (globalThis.routes.list[route_key] === undefined) {
         globalThis.routes.requesting = true;
 
-        let url = `https://api.rallyhub.ru/route/${globalThis.config.game}/${ingame_id}`;
+        let url = `https://api.${globalThis.domain}/route/${globalThis.config.game}/${ingame_id}`;
 
         log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
@@ -246,7 +247,9 @@ app.whenReady().then(async function() {
     await installer.wrc23();
     await installer.drt20();
 
-    globalThis.window.webContents.send(`ready`);
+    setTimeout(() => {
+        globalThis.window.webContents.send(`ready`);
+    }, 1000);
 });
 
 app.on(`second-instance`, function() {
