@@ -5,6 +5,7 @@ const parser = require(`./parser`);
 const installer = require(`./installer`);
 const socket = require(`dgram`).createSocket(`udp4`);
 
+const { shell } = require(`electron`);
 const { app, BrowserWindow, ipcMain } = require(`electron/main`);
 
 
@@ -98,6 +99,10 @@ ipcMain.handle(`voices:filters:get`, async function(event) {
     return await response.json();
 });
 
+ipcMain.handle(`external:open`, async function(event, url) {
+    return shell.openExternal(url);
+});
+
 ipcMain.handle(`window:close`, async function(event) {
     return globalThis.window.close();
 });
@@ -187,21 +192,6 @@ socket.bind(globalThis.config.port || 20220);
 
 
 app.whenReady().then(async function() {
-    let restart = await installer.app().catch(function() {
-        log.error(`[CODE: INDEX_INSTALL_APP]`);
-        return false;
-    });
-    
-    if (restart) {
-        await log.info(`[CODE: INDEX_RESTART_AFTER_UPDATE]`);
-
-        app.relaunch();
-        app.exit();
-    };
-
-    await installer.wrc23();
-    await installer.drt20();
-
     globalThis.routes = {
         requesting: false,
         list: {}
@@ -240,6 +230,23 @@ app.whenReady().then(async function() {
 
         app.quit();
     });
+
+    let restart = await installer.app().catch(function() {
+        log.error(`[CODE: INDEX_INSTALL_APP]`);
+        return false;
+    });
+    
+    if (restart) {
+        await log.info(`[CODE: INDEX_RESTART_AFTER_UPDATE]`);
+
+        app.relaunch();
+        app.exit();
+    };
+
+    await installer.wrc23();
+    await installer.drt20();
+
+    globalThis.window.webContents.send(`ready`);
 });
 
 app.on(`second-instance`, function() {

@@ -24,6 +24,13 @@ const elements = {
         game: document.getElementById(`game`),
         volume: document.getElementById(`volume`),
         offset: document.getElementById(`offset`)
+    },
+    preloader: {
+        container: document.querySelector(`.preloader`),
+        external: {
+            discord: document.querySelector(`.external.discord`),
+            vk: document.querySelector(`.external.vk`)
+        }
     }
 };
 
@@ -128,6 +135,9 @@ const loadVoice = async function(voice_id) {
     audio.voice = await window.electronAPI.voice.get(voice_id);
 
     if (!audio.voice) {
+        elements.voice.name.innerText = `Not selected`;
+        elements.voice.content.classList.remove(`loading`);
+        
         return false;
     };
 
@@ -258,6 +268,15 @@ elements.header.close.addEventListener(`click`, async function() {
 });
 
 
+elements.preloader.external.discord.addEventListener(`click`, async function() {
+    await window.electronAPI.external.open(`https://discord.gg/qdpRPySymg`);
+});
+
+elements.preloader.external.vk.addEventListener(`click`, async function() {
+    await window.electronAPI.external.open(`https://vk.com/rallyhub`);
+});
+
+
 window.electronAPI.onUpdateTelemetry(function(telemetry) {
     let header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}m`;
 
@@ -323,6 +342,48 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
     };
 });
 
+window.electronAPI.onAppReady(async function() {
+    elements.preloader.container.remove();
+
+    if (config.voice) {
+        await loadVoice(config.voice);
+    };
+
+    for (const author of (await window.electronAPI.voices.filters()).authors) {
+        let option = document.createElement(`option`);
+            option.setAttribute(`value`, author);
+            option.innerText = author;
+    
+        elements.voices.author.append(option);
+    };
+    
+    for (const language of (await window.electronAPI.voices.filters()).languages) {
+        let option = document.createElement(`option`);
+            option.setAttribute(`value`, language);
+            option.innerText = language.toUpperCase();
+    
+        elements.voices.language.append(option);
+    };
+
+    await loadVoices();
+
+    setInterval(function() {
+        if (audio.playlist.length < 1 || (audio.element.currentTime > 0 && !audio.element.ended)) {
+            return false;
+        };
+    
+        if (audio.voice.tracks[audio.playlist[0]]) {
+            audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[audio.playlist[0]]}`);
+            audio.element.load();
+    
+            audio.element.volume = parseInt(config.volume) / 100;
+            audio.element.play();
+        };
+    
+        audio.playlist.splice(0, 1);
+    }, 50);
+});
+
 
 if (config.game) {
     elements.settings.game.value = config.game;
@@ -336,44 +397,3 @@ if (config.volume) {
 if (config.offset) {
     elements.settings.offset.value = config.offset;
 };
-
-if (config.voice) {
-    await loadVoice(config.voice);
-};
-
-
-for (const author of (await window.electronAPI.voices.filters()).authors) {
-    let option = document.createElement(`option`);
-        option.setAttribute(`value`, author);
-        option.innerText = author;
-
-    elements.voices.author.append(option);
-};
-
-for (const language of (await window.electronAPI.voices.filters()).languages) {
-    let option = document.createElement(`option`);
-        option.setAttribute(`value`, language);
-        option.innerText = language.toUpperCase();
-
-    elements.voices.language.append(option);
-};
-
-
-await loadVoices();
-
-
-setInterval(function() {
-    if (audio.playlist.length < 1 || (audio.element.currentTime > 0 && !audio.element.ended)) {
-        return false;
-    };
-
-    if (audio.voice.tracks[audio.playlist[0]]) {
-        audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[audio.playlist[0]]}`);
-        audio.element.load();
-
-        audio.element.volume = parseInt(config.volume) / 100;
-        audio.element.play();
-    };
-
-    audio.playlist.splice(0, 1);
-}, 50);

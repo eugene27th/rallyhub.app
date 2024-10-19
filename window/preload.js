@@ -23,6 +23,11 @@ contextBridge.exposeInMainWorld(`electronAPI`, {
             return ipcRenderer.invoke(`voices:filters:get`);
         }
     },
+    external: {
+        open: function(url) {
+            return ipcRenderer.invoke(`external:open`, url);
+        }
+    },
     window: {
         close: function() {
             return ipcRenderer.invoke(`window:close`);
@@ -34,6 +39,11 @@ contextBridge.exposeInMainWorld(`electronAPI`, {
     onUpdateTelemetry: function(callback) {
         return ipcRenderer.on(`telemetry`, function(_event, value) {
             return callback(value);
+        });
+    },
+    onAppReady: function(callback) {
+        return ipcRenderer.on(`ready`, function(_event) {
+            return callback();
         });
     }
 });
