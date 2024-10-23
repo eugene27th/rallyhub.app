@@ -78,6 +78,8 @@ body {
 
 button {
     padding: 0 15px;
+    display: flex;
+    align-items: center;
     border: none;
     border-radius: 2px;
     font-size: 14px;
@@ -104,8 +106,6 @@ button {
         width: 30px;
         height: 30px;
         padding: 0;
-        display: flex;
-        align-items: center;
         justify-content: center;
 
         &:active {
@@ -133,6 +133,13 @@ button {
         }
     }
 
+    &[action=voices-load] {
+        img {
+            height: 17px;
+            margin-right: 7px;
+        }
+    }
+
     img {
         pointer-events: none;
         transition: 0.2s;
@@ -142,7 +149,7 @@ button {
 
 select {
     height: 40px;
-    padding: 1px 15px 0 15px;
+    padding: 0 15px;
     border: none;
     border-radius: 2px;
     font-size: 14px;
@@ -168,7 +175,7 @@ select {
 
 input[type=text], input[type=number] {
     height: 40px;
-    padding: 0 20px;
+    padding: 0 15px;
     border: none;
     border-radius: 2px;
     font-size: 14px;

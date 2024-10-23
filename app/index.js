@@ -202,17 +202,13 @@ app.whenReady().then(async function() {
         useContentSize: true,
         titleBarStyle: `hidden`,
         icon: `${app.getAppPath()}/icon.png`,
+        backgroundColor: `#2B2D31`,
         webPreferences: {
             nodeIntegration: true,
             backgroundThrottling: false,
             preload: `${app.getAppPath()}/window/preload.js`
         }
     });
-
-    globalThis.window.loadFile(`./window/index.html`);
-
-    // globalThis.window.webContents.openDevTools({ activate: false });
-    globalThis.window.removeMenu();
 
     globalThis.window.on(`closed`, async function() {
         log.info(`[CODE: INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
@@ -224,24 +220,29 @@ app.whenReady().then(async function() {
         app.quit();
     });
 
-    let restart = await installer.app().catch(function() {
-        log.error(`[CODE: INDEX_INSTALL_APP]`);
-        return false;
-    });
-    
-    if (restart) {
-        await log.info(`[CODE: INDEX_RESTART_AFTER_UPDATE]`);
+    globalThis.window.webContents.on(`did-finish-load`, async function() {
+        let restart = await installer.app().catch(function() {
+            log.error(`[CODE: INDEX_INSTALL_APP]`);
+            return false;
+        });
 
-        app.relaunch();
-        app.exit();
-    };
+        if (restart) {
+            await log.info(`[CODE: INDEX_RESTART_AFTER_UPDATE]`);
 
-    await installer.wrc23();
-    await installer.drt20();
+            app.relaunch();
+            app.exit();
+        };
 
-    setTimeout(() => {
+        await installer.wrc23();
+        await installer.drt20();
+
         globalThis.window.webContents.send(`ready`);
-    }, 2000);
+    });
+
+    globalThis.window.loadFile(`./window/index.html`);
+    globalThis.window.removeMenu();
+
+    // globalThis.window.webContents.openDevTools({ activate: false });
 });
 
 app.on(`second-instance`, function() {
