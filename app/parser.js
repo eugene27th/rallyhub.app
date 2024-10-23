@@ -138,6 +138,9 @@ const drt20 = function(buffer) {
                 stage: parsed.stage_current_time
             },
             vehicle: {
+                position: {
+                    x: parsed.vehicle_position_x
+                },
                 speed: parsed.vehicle_speed * 3.6
             }
         };

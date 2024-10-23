@@ -127,17 +127,13 @@ socket.on(`message`, async function (message){
     let ingame_id;
 
     if (globalThis.config.game === `wrc23`) {
-        if (!telemetry.packet_4cc) {
-            return false;
-        };
-
         ingame_id = telemetry.stage.id;
     } else if (globalThis.config.game === `drt20`) {
-        if (telemetry.packet_4cc) {
+        if (telemetry.stage.length === 0) {
             return false;
         };
 
-        ingame_id = parseInt(telemetry.stage.length * 100000);
+        ingame_id = parseInt((telemetry.stage.length + Math.abs(telemetry.vehicle.position.x)) * 100000);
     };
 
     if (!ingame_id) {
