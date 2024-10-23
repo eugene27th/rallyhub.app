@@ -129,11 +129,7 @@ socket.on(`message`, async function (message){
     if (globalThis.config.game === `wrc23`) {
         ingame_id = telemetry.stage.id;
     } else if (globalThis.config.game === `drt20`) {
-        if (telemetry.stage.length === 0) {
-            return false;
-        };
-
-        ingame_id = parseInt((telemetry.stage.length + Math.abs(telemetry.vehicle.position.x)) * 100000);
+        ingame_id = parseInt(telemetry.stage.length * 100000);
     };
 
     if (!ingame_id) {
@@ -245,7 +241,7 @@ app.whenReady().then(async function() {
 
     setTimeout(() => {
         globalThis.window.webContents.send(`ready`);
-    }, 1000);
+    }, 2000);
 });
 
 app.on(`second-instance`, function() {

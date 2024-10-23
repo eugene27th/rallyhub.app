@@ -372,7 +372,7 @@ window.electronAPI.onAppReady(async function() {
             return false;
         };
     
-        if (audio.voice.tracks[audio.playlist[0]]) {
+        if (audio.voice.tracks?.[audio.playlist[0]]) {
             audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[audio.playlist[0]]}`);
             audio.element.load();
     

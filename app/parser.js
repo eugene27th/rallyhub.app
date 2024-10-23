@@ -20,10 +20,12 @@ const wrc23 = function(buffer) {
             .floatle(`vehicle_brake_temperature_fl`)
             .floatle(`vehicle_brake_temperature_fr`)
             .parse(buffer);
-            
+
+        if (parsed.packet_4cc !== `sesu`) {
+            return null;
+        };
 
         return {
-            packet_4cc: parsed.packet_4cc,
             stage: {
                 id: parsed.route_id,
                 length: parsed.stage_length,
@@ -127,6 +129,10 @@ const drt20 = function(buffer) {
             
             .parse(buffer);
 
+        if (parsed.stage_length === 0) {
+            return null;
+        };
+
         return {
             stage: {
                 length: parsed.stage_length,
@@ -138,9 +144,6 @@ const drt20 = function(buffer) {
                 stage: parsed.stage_current_time
             },
             vehicle: {
-                position: {
-                    x: parsed.vehicle_position_x
-                },
                 speed: parsed.vehicle_speed * 3.6
             }
         };
