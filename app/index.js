@@ -113,77 +113,6 @@ ipcMain.handle(`window:minimize`, async function(event) {
 });
 
 
-socket.on(`message`, async function (message){
-    if (!globalThis.config.game) {
-        return false;
-    };
-
-    const telemetry = parser[globalThis.config.game](message);
-
-    if (!telemetry) {
-        return false;
-    };
-
-    let ingame_id;
-
-    if (globalThis.config.game === `wrc23`) {
-        ingame_id = telemetry.stage.id;
-    } else if (globalThis.config.game === `drt20`) {
-        ingame_id = parseInt(telemetry.stage.length * 100000);
-    };
-
-    if (!ingame_id) {
-        return false;
-    };
-
-    if (globalThis.routes.requesting) {
-        return false;
-    };
-
-    let route_key = `${globalThis.config.game}-${ingame_id}`;
-
-    if (globalThis.routes.list[route_key] === undefined) {
-        globalThis.routes.requesting = true;
-
-        let url = `https://api.${globalThis.domain}/route/${globalThis.config.game}/${ingame_id}`;
-
-        log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
-
-        let response = await utils.fetcha(url, {
-            method: `GET`
-        }).catch(function() {
-            log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
-            return null;
-        });
-
-        if (response && response.status === 200) {
-            globalThis.routes.list[route_key] = await response.json();
-        } else {
-            log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
-            globalThis.routes.list[route_key] = null;
-        };
-    
-        globalThis.routes.requesting = false;
-    };
-
-    if (!globalThis.routes.list[route_key]) {
-        return false;
-    };
-
-    globalThis.window.webContents.send(`telemetry`, {
-        route: {
-            id: globalThis.routes.list[route_key].id,
-            location: globalThis.routes.list[route_key].location,
-            name: globalThis.routes.list[route_key].name,
-            pacenote: globalThis.routes.list[route_key].pacenote
-        },
-        ...telemetry
-    });
-});
-
-socket.bind(globalThis.config.port || 20220);
-
-
 app.whenReady().then(async function() {
     globalThis.routes = {
         requesting: false,
@@ -237,6 +166,76 @@ app.whenReady().then(async function() {
         await installer.drt20();
 
         globalThis.window.webContents.send(`ready`);
+
+        socket.on(`message`, async function (message){
+            if (!globalThis.config.game) {
+                return false;
+            };
+        
+            const telemetry = parser[globalThis.config.game](message);
+        
+            if (!telemetry) {
+                return false;
+            };
+        
+            let ingame_id;
+        
+            if (globalThis.config.game === `wrc23`) {
+                ingame_id = telemetry.stage.id;
+            } else if (globalThis.config.game === `drt20`) {
+                ingame_id = parseInt(telemetry.stage.length * 100000);
+            };
+        
+            if (!ingame_id) {
+                return false;
+            };
+        
+            if (globalThis.routes.requesting) {
+                return false;
+            };
+        
+            let route_key = `${globalThis.config.game}-${ingame_id}`;
+        
+            if (globalThis.routes.list[route_key] === undefined) {
+                globalThis.routes.requesting = true;
+        
+                let url = `https://api.${globalThis.domain}/route/${globalThis.config.game}/${ingame_id}`;
+        
+                log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
+        
+                let response = await utils.fetcha(url, {
+                    method: `GET`
+                }).catch(function() {
+                    log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+                    return null;
+                });
+        
+                if (response && response.status === 200) {
+                    globalThis.routes.list[route_key] = await response.json();
+                } else {
+                    log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
+                    globalThis.routes.list[route_key] = null;
+                };
+            
+                globalThis.routes.requesting = false;
+            };
+        
+            if (!globalThis.routes.list[route_key]) {
+                return false;
+            };
+        
+            globalThis.window.webContents.send(`telemetry`, {
+                route: {
+                    id: globalThis.routes.list[route_key].id,
+                    location: globalThis.routes.list[route_key].location,
+                    name: globalThis.routes.list[route_key].name,
+                    pacenote: globalThis.routes.list[route_key].pacenote
+                },
+                ...telemetry
+            });
+        });
+        
+        socket.bind(globalThis.config.port || 20220);
     });
 
     globalThis.window.loadFile(`./window/index.html`);
