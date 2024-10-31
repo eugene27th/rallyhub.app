@@ -17,11 +17,7 @@
     },
     "build": {
         "appId": "27thsquad.rallyhub.basic",
-        "files": [
-            "!gitignore"
-        ],
-        "extraFiles": [
-            "config.json"
-        ]
+        "extraFiles": ["config.json"],
+        "electronLanguages": ["en-US"]
     }
 }

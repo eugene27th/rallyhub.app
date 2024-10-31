@@ -349,15 +349,17 @@ window.electronAPI.onAppReady(async function() {
         await loadVoice(config.voice);
     };
 
-    for (const author of (await window.electronAPI.voices.filters()).authors) {
+    const voice_filters = await window.electronAPI.voices.filters();
+
+    for (const author of voice_filters.authors) {
         let option = document.createElement(`option`);
             option.setAttribute(`value`, author);
             option.innerText = author;
     
         elements.voices.author.append(option);
     };
-    
-    for (const language of (await window.electronAPI.voices.filters()).languages) {
+
+    for (const language of voice_filters.languages) {
         let option = document.createElement(`option`);
             option.setAttribute(`value`, language);
             option.innerText = language.toUpperCase();
