@@ -187,10 +187,6 @@ input[type=text], input[type=number] {
     &:focus {
         outline: none;
     }
-
-    &#offset {
-        width: 90px;
-    }
 }
 
 input[type=range] {
@@ -212,7 +208,7 @@ input[type=range] {
         -webkit-appearance: none;
         appearance: none; 
         height: 40px;
-        width: 5px;
+        width: 3px;
         background-color: var(--color-write);
         box-shadow: -400px 0 0 400px var(--color-slider);
     }
@@ -331,7 +327,7 @@ input[type=range] {
         align-items: center;
 
         .setting {
-            margin-right: 20px;
+            margin-right: 15px;
     
             &:last-child {
                 margin-right: 0;
@@ -381,6 +377,12 @@ input[type=range] {
                         text-overflow: ellipsis;
                     }
                 }
+            }
+
+            &.rate {
+                width: 100%;
+                min-width: 100px;
+                max-width: 100px;
             }
     
             &.volume {

@@ -6,7 +6,7 @@ const fs = require(`fs/promises`);
 const app = async function() {
     log.info(`[CODE: INDEX_FETCH] [GET: https://api.${globalThis.domain}/app/version]`);
 
-    let response_version = await utils.fetcha(`https://api.${globalThis.domain}/app/version`, {
+    const response_version = await utils.fetcha(`https://api.${globalThis.domain}/app/version`, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://api.${globalThis.domain}/app/version]`);
@@ -18,7 +18,7 @@ const app = async function() {
         return false;
     };
 
-    let latest_version = (await response_version.json()).basic;
+    const latest_version = (await response_version.json()).basic;
 
     if (globalThis.config.version === latest_version) {
         return false;
@@ -26,7 +26,7 @@ const app = async function() {
 
     log.info(`[CODE: INDEX_FETCH] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
 
-    let response_resources = await utils.fetcha(`https://cdn.${globalThis.domain}/resources/basic.asar`).catch(function() {
+    const response_resources = await utils.fetcha(`https://cdn.${globalThis.domain}/resources/basic.asar`).catch(function() {
         log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
         return null;
     });
@@ -56,11 +56,11 @@ const app = async function() {
 const wrc23 = async function() {
     log.info(`[CODE: INSTALLER_WRC23_INIT]`);
 
-    let config_file_path = `${utils.docpath()}/My Games/WRC/telemetry/config.json`;
+    const config_file_path = `${utils.docpath()}/My Games/WRC/telemetry/config.json`;
 
     log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${config_file_path}]`);
 
-    let config_file = await fs.readFile(config_file_path).catch(function(error) {
+    const config_file = await fs.readFile(config_file_path).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         return null;
     });
@@ -70,7 +70,7 @@ const wrc23 = async function() {
     };
 
     let config = JSON.parse(config_file.toString());
-    let udp_packet = config.udp.packets.find(x => x.structure === `rallyhub.basic`);
+    const udp_packet = config.udp.packets.find(x => x.structure === `rallyhub.basic`);
 
     if (!udp_packet || udp_packet.port !== (globalThis.config.port || 20220)) {
         config.udp.packets.push({
@@ -89,11 +89,11 @@ const wrc23 = async function() {
         });
     };
 
-    let structure_file_path = `${utils.docpath()}/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
+    const structure_file_path = `${utils.docpath()}/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
 
     log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${structure_file_path}]`);
 
-    let structure_file = await fs.readFile(structure_file_path).catch(function(error) {
+    const structure_file = await fs.readFile(structure_file_path).catch(function(error) {
         log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${structure_file_path}]`);
         return false;
     });
@@ -146,11 +146,11 @@ const wrc23 = async function() {
 const drt20 = async function() {
     log.info(`[CODE: INSTALLER_DRT20_INIT]`);
 
-    let config_file_path = `${utils.docpath()}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
+    const config_file_path = `${utils.docpath()}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
 
     log.info(`[CODE: INSTALLER_DRT20_READFILE] [PATH: ${config_file_path}]`);
 
-    let config_file = await fs.readFile(config_file_path, { encoding: `utf8` }).catch(function(error) {
+    const config_file = await fs.readFile(config_file_path, { encoding: `utf8` }).catch(function(error) {
         log.error(`[CODE: INSTALLER_DRT20_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         return null;
     });
@@ -160,8 +160,8 @@ const drt20 = async function() {
     };
 
     if (config_file.search(`<udp enabled="true" extradata="3" port="${globalThis.config.port || 20220}" delay="1" ip="127.0.0.1" />`) < 0) {
-        let index = config_file.search(`</motion_platform>`);
-        let config = `${config_file.slice(0, index)}\t<udp enabled="true" extradata="3" port="${globalThis.config.port || 20220}" delay="1" ip="127.0.0.1" />\n\t${config_file.slice(index)}`;
+        const index = config_file.search(`</motion_platform>`);
+        const config = `${config_file.slice(0, index)}\t<udp enabled="true" extradata="3" port="${globalThis.config.port || 20220}" delay="1" ip="127.0.0.1" />\n\t${config_file.slice(index)}`;
 
         log.info(`[CODE: INSTALLER_DRT20_WRITEFILE] [PATH: ${config_file_path}]`);
 

@@ -4,38 +4,18 @@ const fs = require(`fs/promises`);
 const log = async function(message) {
     let date = new Date();
 
-    let D = date.getUTCDate();
-    let M = date.getUTCMonth() + 1;
-    let Y = date.getUTCFullYear();
+    const D = `${date.getUTCDate()}`.padStart(2, `0`);
+    const M = `${date.getUTCMonth() + 1}`.padStart(2, `0`);
+    const Y = date.getUTCFullYear();
 
-    if (D < 10) {
-        D = `0${D}`;
-    };
+    const h = `${date.getUTCHours()}`.padStart(2, `0`);
+    const m = `${date.getUTCMinutes()}`.padStart(2, `0`);
+    const s = `${date.getUTCSeconds()}`.padStart(2, `0`);
 
-    if (M < 10) {
-        M = `0${M}`;
-    };
+    const path = `${globalThis.path}/app.log`;
+    const row = `[${D}.${M}.${Y} ${h}:${m}:${s}Z] ${message}\n`;
 
-    let h = date.getUTCHours();
-    let m = date.getUTCMinutes();
-    let s = date.getUTCSeconds();
-
-    if (h < 10) {
-        h = `0${h}`;
-    };
-
-    if (m < 10) {
-        m = `0${m}`;
-    };
-
-    if (s < 10) {
-        s = `0${s}`;
-    };
-
-    let path = `${globalThis.path}/app.log`;
-    let row = `[${D}.${M}.${Y} ${h}:${m}:${s}Z] ${message}\n`;
-
-    let file = await fs.readFile(path, { encoding: `utf8` }).catch(function() {
+    const file = await fs.readFile(path, { encoding: `utf8` }).catch(function() {
         return null;
     });
 

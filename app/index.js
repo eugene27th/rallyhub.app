@@ -39,11 +39,11 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 
     globalThis.voices.requesting = true;
 
-    let url = `https://api.${globalThis.domain}/voice/${voice_id}`;
+    const url = `https://api.${globalThis.domain}/voice/${voice_id}`;
 
     log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
-    let response = await utils.fetcha(url, {
+    const response = await utils.fetcha(url, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -63,11 +63,11 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
 });
 
 ipcMain.handle(`voices:get`, async function(event, options) {
-    let url = `https://api.${globalThis.domain}/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
+    const url = `https://api.${globalThis.domain}/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
 
     log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
 
-    let response = await utils.fetcha(url, {
+    const response = await utils.fetcha(url, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -83,9 +83,9 @@ ipcMain.handle(`voices:get`, async function(event, options) {
 });
 
 ipcMain.handle(`voices:filters:get`, async function(event) {
-    let url = `https://api.${globalThis.domain}/voices/filters`;
+    const url = `https://api.${globalThis.domain}/voices/filters`;
 
-    let response = await utils.fetcha(url, {
+    const response = await utils.fetcha(url, {
         method: `GET`
     }).catch(function() {
         log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
@@ -150,7 +150,7 @@ app.whenReady().then(async function() {
     });
 
     globalThis.window.webContents.on(`did-finish-load`, async function() {
-        let restart = await installer.app().catch(function() {
+        const restart = await installer.app().catch(function() {
             log.error(`[CODE: INDEX_INSTALL_APP]`);
             return false;
         });
@@ -194,16 +194,16 @@ app.whenReady().then(async function() {
                 return false;
             };
         
-            let route_key = `${globalThis.config.game}-${ingame_id}`;
+            const route_key = `${globalThis.config.game}-${ingame_id}`;
         
             if (globalThis.routes.list[route_key] === undefined) {
                 globalThis.routes.requesting = true;
         
-                let url = `https://api.${globalThis.domain}/route/${globalThis.config.game}/${ingame_id}`;
+                const url = `https://api.${globalThis.domain}/route/${globalThis.config.game}/${ingame_id}`;
         
                 log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
         
-                let response = await utils.fetcha(url, {
+                const response = await utils.fetcha(url, {
                     method: `GET`
                 }).catch(function() {
                     log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);

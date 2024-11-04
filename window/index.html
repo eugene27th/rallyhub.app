@@ -57,14 +57,17 @@
                         <div class="author"></div>
                     </div>
                 </div>
-                <div class="setting offset">
-                    <div class="title">Offset (m)</div>
-                    <input id="offset" type="number" max="100" min="-100" value="0">
+                <div class="setting rate">
+                    <div class="title">Playback rate</div>
+                    <div class="range">
+                        <input id="rate" type="range" min="100" max="150" step="1" value="100">
+                        <div class="value">100%</div>
+                    </div>
                 </div>
                 <div class="setting volume">
                     <div class="title">Volume</div>
                     <div class="range">
-                        <input id="volume" type="range" min="0" max="100" step="1">
+                        <input id="volume" type="range" min="0" max="100" step="1" value="50">
                         <div class="value">50%</div>
                     </div>
                 </div>

@@ -22,8 +22,8 @@ const elements = {
     },
     settings: {
         game: document.getElementById(`game`),
-        volume: document.getElementById(`volume`),
-        offset: document.getElementById(`offset`)
+        rate: document.getElementById(`rate`),
+        volume: document.getElementById(`volume`)
     },
     preloader: {
         container: document.querySelector(`.preloader`),
@@ -97,7 +97,7 @@ const loadVoices = async function() {
         options.gender = elements.voices.gender.value;
     };
     
-    let voices = await window.electronAPI.voices.get(Object.keys(options).length > 0 ? options : null);
+    const voices = await window.electronAPI.voices.get(Object.keys(options).length > 0 ? options : null);
 
     elements.voices.list.innerHTML = ``;
 
@@ -171,31 +171,27 @@ elements.settings.volume.addEventListener(`input`, async function() {
     });
 });
 
-elements.settings.offset.addEventListener(`input`, async function() {
-    if (this.value < -200) {
-        this.value = -200;
-    };
-
-    if (this.value > 200) {
-        this.value = 200;
-    };
-
-    audio.points = [];
-    audio.playlist = [];
+elements.settings.rate.addEventListener(`input`, async function() {
+    this.nextElementSibling.innerText = `${this.value}%`;
 
     await editConfig({
-        offset: this.value
+        rate: this.value
     });
 });
 
 
 elements.voice.listen.addEventListener(`click`, async function() {
-    let names = Object.keys(audio.voice.tracks);
+    const names = Object.keys(audio.voice.tracks);
 
     audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
     audio.element.load();
 
     audio.element.volume = parseInt(config.volume) / 100;
+    
+    if (config.rate) {
+        audio.element.playbackRate = parseInt(config.rate) / 100;
+    };
+
     await audio.element.play();
 });
 
@@ -204,8 +200,8 @@ elements.voices.list.addEventListener(`click`, async function(event) {
         return false;
     };
 
-    let action = event.target.getAttribute(`action`);
-    let voice_id = event.target.getAttribute(`voice`);
+    const action = event.target.getAttribute(`action`);
+    const voice_id = event.target.getAttribute(`voice`);
 
     if (!action || !voice_id) {
         return false;
@@ -223,18 +219,23 @@ elements.voices.list.addEventListener(`click`, async function(event) {
     };
 
     if (action === `voice-listen`) {
-        let voice = await window.electronAPI.voice.get(voice_id);
+        const voice = await window.electronAPI.voice.get(voice_id);
     
         if (!voice) {
             return false;
         };
     
-        let names = Object.keys(voice.tracks);
+        const names = Object.keys(voice.tracks);
     
         audio.element.setAttribute(`src`, `data:audio/webm;base64,${voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
         audio.element.load();
     
         audio.element.volume = parseInt(config.volume) / 100;
+
+        if (config.rate) {
+            audio.element.playbackRate = parseInt(config.rate) / 100;
+        };
+
         audio.element.play();
     };
 
@@ -278,13 +279,13 @@ elements.preloader.external.vk.addEventListener(`click`, async function() {
 
 
 window.electronAPI.onUpdateTelemetry(function(telemetry) {
-    let header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}m`;
+    const header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}m`;
 
     if (elements.header.status.innerText !== header) {
         elements.header.status.innerText = header;
     };
 
-    let distance = telemetry.stage.distance;
+    const distance = telemetry.stage.distance;
 
     if (route.id !== telemetry.route.id || (distance <= 0 && audio.points.length > 1)) {
         audio.points = [];
@@ -307,7 +308,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
 
     if (!route.briefing) {
         if (distance <= 0) {
-            let briefing_point = telemetry.route.pacenote.find(function(point) {
+            const briefing_point = telemetry.route.pacenote.find(function(point) {
                 return point.distance === -1;
             });
     
@@ -320,8 +321,8 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         route.briefing = true;
     };
 
-    let points = telemetry.route.pacenote.filter(function(point) {
-        return !audio.points.includes(point.distance) && ((point.distance + parseInt(config.offset)) > distance && (point.distance + parseInt(config.offset)) < (distance + 2));
+    const points = telemetry.route.pacenote.filter(function(point) {
+        return !audio.points.includes(point.distance) && point.distance > distance && point.distance < (distance + 2);
     });
 
     if (points.length > 0) {
@@ -379,6 +380,11 @@ window.electronAPI.onAppReady(async function() {
             audio.element.load();
     
             audio.element.volume = parseInt(config.volume) / 100;
+
+            if (config.rate) {
+                audio.element.playbackRate = parseInt(config.rate) / 100;
+            };
+
             audio.element.play();
         };
     
@@ -396,6 +402,7 @@ if (config.volume) {
     elements.settings.volume.nextElementSibling.innerText = `${config.volume}%`;
 };
 
-if (config.offset) {
-    elements.settings.offset.value = config.offset;
+if (config.rate) {
+    elements.settings.rate.value = config.rate;
+    elements.settings.rate.nextElementSibling.innerText = `${config.rate}%`;
 };

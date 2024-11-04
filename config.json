@@ -1,6 +1,6 @@
 {
-    "version": "0.3.6",
+    "version": "0.3.7",
     "port": 20220,
     "volume": "50",
-    "offset": "0"
+    "rate": "100"
 }
