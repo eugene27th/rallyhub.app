@@ -28,8 +28,7 @@ const elements = {
     preloader: {
         container: document.querySelector(`.preloader`),
         external: {
-            discord: document.querySelector(`.external.discord`),
-            vk: document.querySelector(`.external.vk`)
+            faq: document.querySelector(`.external.faq`)
         }
     }
 };
@@ -269,12 +268,8 @@ elements.header.close.addEventListener(`click`, async function() {
 });
 
 
-elements.preloader.external.discord.addEventListener(`click`, async function() {
-    await window.electronAPI.external.open(`https://discord.gg/qdpRPySymg`);
-});
-
-elements.preloader.external.vk.addEventListener(`click`, async function() {
-    await window.electronAPI.external.open(`https://vk.com/rallyhub`);
+elements.preloader.external.faq.addEventListener(`click`, async function() {
+    await window.electronAPI.external.open(`https://rallyhub.ru/ru/faq`);
 });
 
 

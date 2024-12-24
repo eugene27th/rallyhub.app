@@ -289,7 +289,11 @@ input[type=range] {
         flex: 1;
         z-index: 1;
 
-        div {
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
             .loading {
                 display: flex;
                 align-items: center;
@@ -303,12 +307,20 @@ input[type=range] {
                     animation: preloader-rotating 1.6s ease infinite;
                 }
             }
-            
-            .note {
-                margin-top: 4px;
-                text-align: center;
-                color: #AEAEAE;
 
+            .description {
+                position: absolute;
+                bottom: 25px;
+
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                .text {
+                    margin-bottom: 4px;
+                    color: #AEAEAE;
+                }
+    
                 .external {
                     color: #8697df;
                     text-decoration: none;
