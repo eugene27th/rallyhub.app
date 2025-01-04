@@ -32,11 +32,11 @@ const log = async function(message) {
 };
 
 const info = async function(message) {
-    return await log(`[INFO] ${message}`);  
+    return await log(`[INFO] ${message}`);
 };
 
 const error = async function(message) {
-    return await log(`[ERROR] ${message}`);  
+    return await log(`[ERROR] ${message}`);
 };
 
 

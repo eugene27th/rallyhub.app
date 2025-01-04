@@ -169,7 +169,7 @@ const drt20 = async function() {
             log.error(`[CODE: INSTALLER_DRT20_WRITEFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
         });
     };
-    
+
     log.info(`[CODE: INSTALLER_DRT20_FINISH]`);
 
     return true;

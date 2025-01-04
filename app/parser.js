@@ -53,7 +53,7 @@ const wrc23 = function(buffer) {
             }
         };
     } catch (error) {
-        return null;  
+        return null;
     };
 };
 
@@ -126,7 +126,7 @@ const drt20 = function(buffer) {
             .floatle(`vehicle_engine_rpm_max`)
             .floatle(`vehicle_engine_rpm_idle`)
             .floatle(`vehicle_gear_max`)
-            
+
             .parse(buffer);
 
         if (parsed.stage_length === 0) {
@@ -148,7 +148,7 @@ const drt20 = function(buffer) {
             }
         };
     } catch (error) {
-        return null;  
+        return null;
     };
 };
 

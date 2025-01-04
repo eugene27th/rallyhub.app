@@ -64,7 +64,7 @@ const editConfig = async function(data) {
         ...data
     };
 
-    await window.electronAPI.config.set(config); 
+    await window.electronAPI.config.set(config);
 };
 
 
@@ -74,7 +74,7 @@ const loadVoices = async function() {
     for (let i = 0; i < 3; i++) {
         let row = document.createElement(`div`);
             row.classList.add(`row`, `loading`);
-    
+
         elements.voices.list.append(row);
     };
 
@@ -95,7 +95,7 @@ const loadVoices = async function() {
     if (elements.voices.gender.value && elements.voices.gender.value.length > 1 && elements.voices.gender.value !== `any`) {
         options.gender = elements.voices.gender.value;
     };
-    
+
     const voices = await window.electronAPI.voices.get(Object.keys(options).length > 0 ? options : null);
 
     elements.voices.list.innerHTML = ``;
@@ -116,7 +116,7 @@ const loadVoices = async function() {
                 <div class="author" title="${voice.author}">${voice.author}</div>
                 <div class="updated">${(new Date(voice.updated)).toLocaleString(`ru-RU`)}</div>
             `;
-    
+
         elements.voices.list.append(row);
     };
 };
@@ -136,7 +136,7 @@ const loadVoice = async function(voice_id) {
     if (!audio.voice) {
         elements.voice.name.innerText = `Not selected`;
         elements.voice.content.classList.remove(`loading`);
-        
+
         return false;
     };
 
@@ -186,7 +186,7 @@ elements.voice.listen.addEventListener(`click`, async function() {
     audio.element.load();
 
     audio.element.volume = parseInt(config.volume) / 100;
-    
+
     if (config.rate) {
         audio.element.playbackRate = parseInt(config.rate) / 100;
     };
@@ -219,16 +219,16 @@ elements.voices.list.addEventListener(`click`, async function(event) {
 
     if (action === `voice-listen`) {
         const voice = await window.electronAPI.voice.get(voice_id);
-    
+
         if (!voice) {
             return false;
         };
-    
+
         const names = Object.keys(voice.tracks);
-    
+
         audio.element.setAttribute(`src`, `data:audio/webm;base64,${voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
         audio.element.load();
-    
+
         audio.element.volume = parseInt(config.volume) / 100;
 
         if (config.rate) {
@@ -269,7 +269,7 @@ elements.header.close.addEventListener(`click`, async function() {
 
 
 elements.preloader.external.faq.addEventListener(`click`, async function() {
-    await window.electronAPI.external.open(`https://rallyhub.ru/ru/faq`);
+    await window.electronAPI.external.open(`https://rallyhub.ru/faq`);
 });
 
 
@@ -306,7 +306,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
             const briefing_point = telemetry.route.pacenote.find(function(point) {
                 return point.distance === -1;
             });
-    
+
             if (briefing_point) {
                 audio.points.push(briefing_point.distance);
                 audio.playlist = audio.playlist.concat(briefing_point.tracks);
@@ -331,7 +331,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
                 if (state === 1 || (state === 2 && vehicle.tyre_state[tyre] !== 1)) {
                     audio.playlist.push(`puncture_${tyre}`);
                 };
-    
+
                 vehicle.tyre_state[tyre] = state;
             };
         };
@@ -359,7 +359,7 @@ window.electronAPI.onAppReady(async function() {
         let option = document.createElement(`option`);
             option.setAttribute(`value`, language);
             option.innerText = language.toUpperCase();
-    
+
         elements.voices.language.append(option);
     };
 
@@ -369,11 +369,11 @@ window.electronAPI.onAppReady(async function() {
         if (audio.playlist.length < 1 || (audio.element.currentTime > 0 && !audio.element.ended)) {
             return false;
         };
-    
+
         if (audio.voice.tracks?.[audio.playlist[0]]) {
             audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[audio.playlist[0]]}`);
             audio.element.load();
-    
+
             audio.element.volume = parseInt(config.volume) / 100;
 
             if (config.rate) {
@@ -382,7 +382,7 @@ window.electronAPI.onAppReady(async function() {
 
             audio.element.play();
         };
-    
+
         audio.playlist.splice(0, 1);
     }, 50);
 });
