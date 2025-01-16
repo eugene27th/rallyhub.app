@@ -1,6 +1,7 @@
 {
-    "version": "0.3.8.1",
+    "version": "0.4.1",
     "port": 20220,
-    "volume": "50",
-    "rate": "100"
+    "voice": 1,
+    "rate": 100,
+    "volume": 50
 }

@@ -1,67 +1,86 @@
-const log = require(`./logger`);
-const utils = require(`./utils`);
 const fs = require(`fs/promises`);
+
+const fetch = require(`./fetch`);
+const logger = require(`./logger`);
+
+
+let documents_path;
+
+try {
+    documents_path = (require(`child_process`).execSync(`chcp 65001 & reg query "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" /v Personal`))
+        .toString(`utf-8`)
+        .replaceAll(`\r\n`, ``)
+        .split(`    `)
+        .slice(3)
+        .join(`    `);
+
+    const matches = documents_path.match(/%[^%]+%/g);
+
+    if (matches) {
+        for (let match of matches) {
+            documents_path = documents_path.replace(match, process.env[match.substring(1, match.length - 1)]);
+        };
+    };
+
+    logger.log(`Используется путь директории "Documents" из реестра Windows: "${documents_path}".`);
+} catch (error) {
+    documents_path = `${process.env[`USERPROFILE`]}/Documents`;
+    logger.log(`Путь директории "Documents" не найден в реестре Windows. Используется путь "{USERPROFILE}/Documents" из среды выполнения: "${documents_path}".`);
+};
 
 
 const app = async function() {
-    log.info(`[CODE: INDEX_FETCH] [GET: https://api.${globalThis.domain}/app/version]`);
+    await logger.log(`Проверка версии приложения.`);
 
-    const response_version = await utils.fetcha(`https://api.${globalThis.domain}/app/version`, {
-        method: `GET`
-    }).catch(function() {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://api.${globalThis.domain}/app/version]`);
+    const response_version = await fetch.send(`${globalThis.url.api}/app/version`).catch(async function() {
         return null;
     });
 
-    if (!response_version || response_version.status !== 200) {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE_STATUS] [GET: https://api.${globalThis.domain}/app/version]`);
+    if (response_version?.status !== 200) {
+        await logger.log(`Ошибка при получении актуальной версии приложения. Путь: "${globalThis.url.api}/app/version". Статус: ${response_version?.status}.`);
         return false;
     };
 
-    const latest_version = (await response_version.json()).basic;
+    const latest_version = await response_version.text();
 
     if (globalThis.config.version === latest_version) {
+        await logger.log(`Текущая версия приложения совпадает с актуальной.`);
         return false;
     };
 
-    log.info(`[CODE: INDEX_FETCH] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
+    await logger.log(`Текущая версия приложения не совпадает с актуальной. Обновление приложения.`);
 
-    const response_resources = await utils.fetcha(`https://cdn.${globalThis.domain}/resources/basic.asar`).catch(function() {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
+    const response_resources = await fetch.send(`${globalThis.url.cdn}/app.asar`).catch(async function() {
         return null;
     });
 
-    if (!response_resources || response_resources.status !== 200) {
-        log.error(`[CODE: INSTALLER_FETCH_RESPONSE_STATUS] [GET: https://cdn.${globalThis.domain}/resources/basic.asar]`);
+    if (response_resources?.status !== 200) {
+        await logger.log(`Ошибка при получении архива ресурсов. Путь: "${globalThis.url.cdn}/app.asar". Статус: ${response_resources?.status}.`);
         return false;
     };
 
     globalThis.config.version = latest_version;
 
-    log.info(`[CODE: INSTALLER_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
-
-    await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
-        log.error(`[CODE: INSTALLER_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/config.json]`);
+    await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(async function(error) {
+        await logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
     });
 
-    log.info(`[CODE: INSTALLER_WRITEFILE] [PATH: ${globalThis.path}/resources/app.asar]`);
-
-    await fs.writeFile(`${globalThis.path}/resources/app.asar`, Buffer.from(await response_resources.arrayBuffer())).catch(function(error) {
-        log.error(`[CODE: INSTALLER_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/resources/app.asar]`);
+    await fs.writeFile(`${globalThis.path}/resources/app.asar`, Buffer.from(await response_resources.arrayBuffer())).catch(async function(error) {
+        await logger.log(`Ошибка при обновлении архива ресурсов. Путь: "${globalThis.path}/resources/app.asar". Код: ${error.code}.`);
     });
+
+    await logger.log(`Обновление приложения завершено. Перезагрузка.`);
 
     return true;
 };
 
 const wrc23 = async function() {
-    log.info(`[CODE: INSTALLER_WRC23_INIT]`);
+    await logger.log(`Проверка конфигурации WRC23.`);
 
-    const config_file_path = `${utils.docpath()}/My Games/WRC/telemetry/config.json`;
+    const config_path = `${documents_path}/My Games/WRC/telemetry/config.json`;
 
-    log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${config_file_path}]`);
-
-    const config_file = await fs.readFile(config_file_path).catch(function(error) {
-        log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
+    const config_file = await fs.readFile(config_path).catch(async function(error) {
+        await logger.log(`Ошибка при чтении конфигурационного файла телеметрии WRC23. Путь: "${config_path}". Код: ${error.code}.`);
         return null;
     });
 
@@ -70,39 +89,43 @@ const wrc23 = async function() {
     };
 
     let config = JSON.parse(config_file.toString());
-    const udp_packet = config.udp.packets.find(x => x.structure === `rallyhub.basic`);
+    const udp_packet = config.udp.packets.find(x => x.structure === `rallyhub`);
 
-    if (!udp_packet || udp_packet.port !== (globalThis.config.port || 20220)) {
+    if (!udp_packet || udp_packet.port !== globalThis.config.port) {
+        await logger.log(`Обновление конфигурационного файла телеметрии WRC23.`);
+
+        const config_backup_path = `${documents_path}/My Games/WRC/telemetry/config.rallyhub-backup.json`;
+
+        await fs.copyFile(config_path, config_backup_path).catch(async function(error) {
+            await logger.log(`Ошибка при создании резервной копии конфигурационного файла телеметрии WRC23. Путь: "${config_backup_path}". Код: ${error.code}.`);
+        });
+
         config.udp.packets.push({
-            structure: `rallyhub.basic`,
+            structure: `rallyhub`,
             packet: `session_update`,
             ip: `127.0.0.1`,
-            port: globalThis.config.port || 20220,
+            port: globalThis.config.port,
             frequencyHz: 30,
             bEnabled: true
         });
 
-        log.info(`[CODE: INSTALLER_WRC23_WRITEFILE] [PATH: ${config_file_path}]`);
-
-        await fs.writeFile(config_file_path, JSON.stringify(config, null, 4)).catch(function(error) {
-            log.error(`[CODE: INSTALLER_WRC23_WRITEFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
+        await fs.writeFile(config_path, JSON.stringify(config, null, 4)).catch(async function(error) {
+            await logger.log(`Ошибка при обновлении конфигурационного файла телеметрии WRC23. Путь: "${config_path}". Код: ${error.code}.`);
         });
     };
 
-    const structure_file_path = `${utils.docpath()}/My Games/WRC/telemetry/udp/rallyhub.basic.json`;
+    const structure_path = `${documents_path}/My Games/WRC/telemetry/udp/rallyhub.json`;
 
-    log.info(`[CODE: INSTALLER_WRC23_READFILE] [PATH: ${structure_file_path}]`);
-
-    const structure_file = await fs.readFile(structure_file_path).catch(function(error) {
-        log.error(`[CODE: INSTALLER_WRC23_READFILE] [FS: ${error.code}] [PATH: ${structure_file_path}]`);
-        return false;
+    const structure_file = await fs.readFile(structure_path).catch(async function(error) {
+        await logger.log(`Ошибка при чтении структурного файла телеметрии WRC23. Путь: "${structure_path}". Код: ${error.code}.`);
+        return null;
     });
 
-    if (!structure_file) {
-        log.info(`[CODE: INSTALLER_WRC23_WRITEFILE] [PATH: ${structure_file_path}]`);
+    if (!structure_file) { // todo: или если версия схемы не совпадает с текущей
+        await logger.log(`Запись нового структурного файла телеметрии WRC23.`);
 
-        await fs.writeFile(structure_file_path, JSON.stringify({
-            id: `rallyhub.basic`,
+        await fs.writeFile(structure_path, JSON.stringify({
+            id: `rallyhub`,
             versions: {
                 schema: 1,
                 data: 1
@@ -133,25 +156,23 @@ const wrc23 = async function() {
                     ]
                 }
             ]
-        }, null, 4)).catch(function(error) {
-            log.error(`[CODE: INSTALLER_WRC23_WRITEFILE] [FS: ${error.code}] [PATH: ${structure_file_path}]`);
+        }, null, 4)).catch(async function(error) {
+            await logger.log(`Ошибка при записи структурного файла телеметрии WRC23. Путь: "${structure_path}". Код: ${error.code}.`);
         });
     };
 
-    log.info(`[CODE: INSTALLER_WRC23_FINISH]`);
+    await logger.log(`Конфигурация WRC23 завершена.`);
 
     return true;
 };
 
 const drt20 = async function() {
-    log.info(`[CODE: INSTALLER_DRT20_INIT]`);
+    await logger.log(`Проверка конфигурации DRT20.`);
 
-    const config_file_path = `${utils.docpath()}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
+    const config_path = `${documents_path}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.xml`;
 
-    log.info(`[CODE: INSTALLER_DRT20_READFILE] [PATH: ${config_file_path}]`);
-
-    const config_file = await fs.readFile(config_file_path, { encoding: `utf8` }).catch(function(error) {
-        log.error(`[CODE: INSTALLER_DRT20_READFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
+    const config_file = await fs.readFile(config_path, { encoding: `utf8` }).catch(async function(error) {
+        await logger.log(`Ошибка при чтении конфигурационного файла DRT20. Путь: "${config_path}". Код: ${error.code}.`);
         return null;
     });
 
@@ -159,18 +180,24 @@ const drt20 = async function() {
         return false;
     };
 
-    if (config_file.search(`<udp enabled="true" extradata="3" port="${globalThis.config.port || 20220}" delay="1" ip="127.0.0.1" />`) < 0) {
+    if (config_file.search(`<udp enabled="true" extradata="3" port="${globalThis.config.port}" delay="1" ip="127.0.0.1" />`) < 0) {
+        await logger.log(`Обновление конфигурационного файла DRT20.`);
+
+        const config_backup_path = `${documents_path}/My Games/DiRT Rally 2.0/hardwaresettings/hardware_settings_config.rallyhub-backup.xml`;
+
+        await fs.copyFile(config_path, config_backup_path).catch(async function(error) {
+            await logger.log(`Ошибка при создании резервной копии конфигурационного файла DRT20. Путь: "${config_backup_path}". Код: ${error.code}.`);
+        });
+
         const index = config_file.search(`</motion_platform>`);
-        const config = `${config_file.slice(0, index)}\t<udp enabled="true" extradata="3" port="${globalThis.config.port || 20220}" delay="1" ip="127.0.0.1" />\n\t${config_file.slice(index)}`;
+        const config = `${config_file.slice(0, index)}\t<udp enabled="true" extradata="3" port="${globalThis.config.port}" delay="1" ip="127.0.0.1" />\n\t${config_file.slice(index)}`;
 
-        log.info(`[CODE: INSTALLER_DRT20_WRITEFILE] [PATH: ${config_file_path}]`);
-
-        await fs.writeFile(config_file_path, config).catch(function(error) {
-            log.error(`[CODE: INSTALLER_DRT20_WRITEFILE] [FS: ${error.code}] [PATH: ${config_file_path}]`);
+        await fs.writeFile(config_path, config).catch(async function(error) {
+            await logger.log(`Ошибка при обновлении конфигурационного файла DRT20. Путь: "${config_path}". Код: ${error.code}.`);
         });
     };
 
-    log.info(`[CODE: INSTALLER_DRT20_FINISH]`);
+    await logger.log(`Конфигурация DRT20 завершена.`);
 
     return true;
 };

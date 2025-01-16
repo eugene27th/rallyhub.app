@@ -6,8 +6,8 @@ contextBridge.exposeInMainWorld(`electronAPI`, {
         get: function() {
             return ipcRenderer.invoke(`config:get`);
         },
-        set: function(new_config) {
-            return ipcRenderer.invoke(`config:set`, new_config);
+        set: function(config) {
+            return ipcRenderer.invoke(`config:set`, config);
         }
     },
     voice: {
@@ -16,11 +16,32 @@ contextBridge.exposeInMainWorld(`electronAPI`, {
         }
     },
     voices: {
-        get: function(options) {
-            return ipcRenderer.invoke(`voices:get`, options);
+        get: function() {
+            return ipcRenderer.invoke(`voices:get`);
+        }
+    },
+    route: {
+        get: function(route_id) {
+            return ipcRenderer.invoke(`route:get`, route_id);
         },
-        filters: function() {
-            return ipcRenderer.invoke(`voices:filters:get`);
+        open: function() {
+            return ipcRenderer.invoke(`route:open`);
+        },
+        save: function(route) {
+            return ipcRenderer.invoke(`route:save`, route);
+        },
+        suggest: function(data) {
+            return ipcRenderer.invoke(`route:suggest`, data);
+        }
+    },
+    routes: {
+        get: function() {
+            return ipcRenderer.invoke(`routes:get`);
+        }
+    },
+    commands: {
+        get: function() {
+            return ipcRenderer.invoke(`commands:get`);
         }
     },
     external: {

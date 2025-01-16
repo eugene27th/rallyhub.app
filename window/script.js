@@ -1,403 +1,682 @@
-const elements = {
+const dom = {
     header: {
-        status: document.querySelector(`.header .title .status`),
-        minimize: document.querySelector(`button[action=window-minimize]`),
-        close: document.querySelector(`button[action=window-close]`)
-    },
-    voice: {
-        content: document.querySelector(`.settings .setting.voice .content`),
-        name: document.querySelector(`.settings .setting.voice .content .name`),
-        author: document.querySelector(`.settings .setting.voice .content .author`),
-        language: document.querySelector(`.settings .setting.voice .content .language`),
-        gender: document.querySelector(`.settings .setting.voice .content .gender`),
-        listen: document.querySelector(`.settings .setting.voice .content button[action=voice-listen]`)
-    },
-    voices: {
-        search: document.getElementById(`search`),
-        author: document.getElementById(`author`),
-        language: document.getElementById(`language`),
-        gender: document.getElementById(`gender`),
-        load: document.querySelector(`button[action=voices-load]`),
-        list: document.querySelector(`.voices .list`)
-    },
-    settings: {
-        game: document.getElementById(`game`),
-        rate: document.getElementById(`rate`),
-        volume: document.getElementById(`volume`)
+        status: document.querySelector(`.header .draggable .status`),
+        minimize: document.querySelector(`.header .menu .buttons button[action=window-minimize]`),
+        close: document.querySelector(`.header .menu .buttons button[action=window-close]`)
     },
     preloader: {
-        container: document.querySelector(`.preloader`),
-        external: {
-            faq: document.querySelector(`.external.faq`)
+        container: document.querySelector(`.container .preloader`),
+        link: document.querySelector(`.container .preloader .content .description .external.faq`)
+    },
+    settings: {
+        game: document.querySelector(`.container .settings .block.game select`),
+        voice: document.querySelector(`.container .settings .block.voice select`),
+        rate: document.querySelector(`.container .settings .block.rate .range input`),
+        volume: document.querySelector(`.container .settings .block.volume .row .range input`),
+        listen: document.querySelector(`.container .settings .block.volume .row button[action=voice-listen]`)
+    },
+    editor: {
+        location: document.querySelector(`.container .editor .location select`),
+        routes: document.querySelector(`.container .editor .routes .list`),
+        waypoints: document.querySelector(`.container .editor .waypoints .list`),
+        route: {
+            open: document.querySelector(`.container .editor button[action=route-open]`),
+            save: document.querySelector(`.container .editor button[action=route-save]`),
+            suggest: document.querySelector(`.container .editor button[action=route-suggest]`),
+        },
+        waypoint: {
+            create: document.querySelector(`.container .editor button[action=point-create]`),
+            delete: document.querySelector(`.container .editor button[action=point-delete]`),
+            distance: {
+                new: document.querySelector(`.container .editor .newwaypoint input`),
+                set: document.querySelector(`.container .editor .newwaypoint button[action=point-set-distance]`),
+                sel: document.querySelector(`.container .editor .selwaypoint input`),
+            }
+        },
+        commands: {
+            all: document.querySelector(`.container .editor .allcommands .list`),
+            selected: document.querySelector(`.container .editor .selcommands .list`)
         }
     }
 };
 
-let config = await window.electronAPI.config.get();
-
-let audio = {
-    voice: {},
-    element: new Audio(),
-    playlist: [],
-    points: [],
-    preloaded: []
-};
-
-let route = {
-    id: 0,
-    briefing: false
-};
-
-let vehicle = {
-    tyre_state: {
-        fl: 0,
-        fr: 0,
-        rl: 0,
-        rr: 0
+const app = {
+    config: {},
+    routes: [],
+    voices: [],
+    commands: [],
+    audio: {
+        element: new Audio(),
+        selected_voice: {}
+    },
+    current_stage: {
+        route_id: 0,
+        playlist: [],
+        briefing: false,
+        completed_distance: 0,
+        completed_waypoints: [],
+        vehicle: {
+            tyre_state: {
+                fl: 0,
+                fr: 0,
+                rl: 0,
+                rr: 0
+            }
+        }
+    },
+    editor: {
+        selected_route: null,
+        selected_waypoint: null
     }
 };
 
 
-const editConfig = async function(data) {
-    config = {
-        ...config,
-        ...data
+const selectGame = async function(game) {
+    if (app.config.game !== game) {
+        app.config = {
+            ...app.config,
+            game: game
+        };
+    
+        await window.electronAPI.config.set(app.config);
     };
 
-    await window.electronAPI.config.set(config);
-};
-
-
-const loadVoices = async function() {
-    elements.voices.list.innerHTML = ``;
-
-    for (let i = 0; i < 3; i++) {
-        let row = document.createElement(`div`);
-            row.classList.add(`row`, `loading`);
-
-        elements.voices.list.append(row);
+    if (dom.settings.game.value !== game) {
+        dom.settings.game.value = game;
     };
 
-    let options = {};
-
-    if (elements.voices.search.value && elements.voices.search.value.length > 1) {
-        options.search = elements.voices.search.value;
+    if (dom.settings.game.querySelector(`option[disabled]`)) {
+        dom.settings.game.querySelector(`option[disabled]`).remove();
     };
 
-    if (elements.voices.author.value && elements.voices.author.value.length > 1 && elements.voices.author.value !== `any`) {
-        options.author = elements.voices.author.value;
-    };
+    resetSelectedLocation();
 
-    if (elements.voices.language.value && elements.voices.language.value.length > 1 && elements.voices.language.value !== `any`) {
-        options.language = elements.voices.language.value;
-    };
+    const locations = new Set();
 
-    if (elements.voices.gender.value && elements.voices.gender.value.length > 1 && elements.voices.gender.value !== `any`) {
-        options.gender = elements.voices.gender.value;
-    };
-
-    const voices = await window.electronAPI.voices.get(Object.keys(options).length > 0 ? options : null);
-
-    elements.voices.list.innerHTML = ``;
-
-    for (const voice of voices) {
-        let row = document.createElement(`div`);
-            row.classList.add(`row`);
-            row.innerHTML = `
-                <button class="icon" action="voice-select" voice="${voice.id}">
-                    <img src="./assets/images/download.svg">
-                </button>
-                <button class="icon" action="voice-listen" voice="${voice.id}">
-                    <img src="./assets/images/listen.svg">
-                </button>
-                <div class="name" title="${voice.name}">${voice.name}</div>
-                <div class="language">${voice.language.toUpperCase()}</div>
-                <div class="gender">${voice.gender.toUpperCase()}</div>
-                <div class="author" title="${voice.author}">${voice.author}</div>
-                <div class="updated">${(new Date(voice.updated)).toLocaleString(`ru-RU`)}</div>
-            `;
-
-        elements.voices.list.append(row);
-    };
-};
-
-const loadVoice = async function(voice_id) {
-    elements.voice.content.classList.add(`loading`);
-
-    elements.voice.name.innerText = `Downloading...`;
-    elements.voice.author.innerText = ``;
-    elements.voice.language.innerText = ``;
-    elements.voice.gender.innerText = ``;
-
-    elements.voice.listen.disabled = true;
-
-    audio.voice = await window.electronAPI.voice.get(voice_id);
-
-    if (!audio.voice) {
-        elements.voice.name.innerText = `Not selected`;
-        elements.voice.content.classList.remove(`loading`);
-
-        return false;
-    };
-
-    if (!audio.preloaded.includes(audio.voice.id)) {
-        audio.preloaded.push(audio.voice.id);
-    };
-
-    audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[`100`]}`);
-
-    elements.voice.name.innerText = audio.voice.name;
-    elements.voice.author.innerText = `by ${audio.voice.author}`;
-    elements.voice.language.innerText = audio.voice.language.toUpperCase();
-    elements.voice.gender.innerText = audio.voice.gender.toUpperCase();
-
-    elements.voice.content.classList.remove(`loading`);
-    elements.voice.listen.disabled = false;
-};
-
-
-elements.settings.game.addEventListener(`change`, async function() {
-    await editConfig({
-        game: this.value
-    });
-});
-
-elements.settings.volume.addEventListener(`input`, async function() {
-    this.nextElementSibling.innerText = `${this.value}%`;
-
-    await editConfig({
-        volume: this.value
-    });
-});
-
-elements.settings.rate.addEventListener(`input`, async function() {
-    this.nextElementSibling.innerText = `${this.value}%`;
-
-    await editConfig({
-        rate: this.value
-    });
-});
-
-
-elements.voice.listen.addEventListener(`click`, async function() {
-    const names = Object.keys(audio.voice.tracks);
-
-    audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
-    audio.element.load();
-
-    audio.element.volume = parseInt(config.volume) / 100;
-
-    if (config.rate) {
-        audio.element.playbackRate = parseInt(config.rate) / 100;
-    };
-
-    await audio.element.play();
-});
-
-elements.voices.list.addEventListener(`click`, async function(event) {
-    if (event.target.tagName !== `BUTTON`) {
-        return false;
-    };
-
-    const action = event.target.getAttribute(`action`);
-    const voice_id = event.target.getAttribute(`voice`);
-
-    if (!action || !voice_id) {
-        return false;
-    };
-
-    if (config.voice !== voice_id && !audio.preloaded.includes(voice_id)) {
-        audio.preloaded.push(voice_id);
-
-        event.target.classList.add(`loading`);
-        event.target.parentElement.classList.add(`loading`);
-
-        for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
-            button.disabled = true;
+    for (const route of app.routes) {
+        if (route.game === game) {
+            locations.add(route.location);
         };
     };
 
-    if (action === `voice-listen`) {
-        const voice = await window.electronAPI.voice.get(voice_id);
+    dom.editor.location.innerHTML = ``;
 
-        if (!voice) {
-            return false;
+    let option = document.createElement(`option`);
+        option.setAttribute(`disabled`, true);
+        option.setAttribute(`selected`, true);
+        option.innerText = `Выберите локацию`;
+
+    dom.editor.location.append(option);
+
+    for (const location of locations.values()) {
+        let option = document.createElement(`option`);
+            option.setAttribute(`value`, location);
+            option.innerText = location;
+
+        dom.editor.location.append(option);
+    };
+};
+
+const selectLocation = function(location) {
+    if (dom.editor.location.value !== location) {
+        dom.editor.location.value = location;
+    };
+
+    if (dom.editor.location.querySelector(`option[disabled]`)) {
+        dom.editor.location.querySelector(`option[disabled]`).remove();
+    };
+
+    resetSelectedRoute();
+
+    dom.editor.routes.innerHTML = ``;
+
+    for (const route of app.routes) {
+        if (route.location === location) {
+            let item = document.createElement(`div`);
+                item.classList.add(`item`);
+                item.setAttribute(`id`, route.id);
+                item.innerText = route.name;
+
+            dom.editor.routes.append(item);
+        };
+    };
+};
+
+const selectRoute = async function(id) {
+    dom.editor.routes.classList.add(`disabled`);
+    
+    resetSelectedWaypoint();
+
+    const selected_item = dom.editor.routes.querySelector(`.item.selected`);
+
+    if (selected_item) {
+        selected_item.classList.remove(`selected`);
+    };
+
+    dom.editor.routes.querySelector(`.item[id="${id}"]`).classList.add(`selected`);
+
+    app.editor.selected_route = await window.electronAPI.route.get(id);
+
+    dom.editor.waypoints.innerHTML = ``;
+
+    for (const waypoint of app.editor.selected_route.pacenote) {
+        let item = document.createElement(`div`);
+            item.classList.add(`item`);
+            item.setAttribute(`distance`, waypoint.distance);
+            item.innerHTML = getWaypointHtml(waypoint.distance, waypoint.commands);
+
+        dom.editor.waypoints.append(item);
+    };
+
+    dom.editor.routes.classList.remove(`disabled`);
+};
+
+const selectWaypoint = function(distance) {
+    const selected_item = dom.editor.waypoints.querySelector(`.item.selected`);
+
+    if (selected_item) {
+        selected_item.classList.remove(`selected`);
+    };
+
+    dom.editor.waypoints.querySelector(`.item[distance="${distance}"]`).classList.add(`selected`);
+
+    app.editor.selected_waypoint = app.editor.selected_route.pacenote.find(function(x) {
+        return x.distance === parseInt(distance);
+    });
+
+    dom.editor.commands.selected.innerHTML = ``;
+    dom.editor.waypoint.distance.sel.value = distance;
+
+    for (const command of app.editor.selected_waypoint.commands) {
+        addCommandElement(command);
+    };
+};
+
+
+const selectVoice = async function(voice_id) {
+    if (app.config.voice !== parseInt(voice_id)) {
+        app.config = {
+            ...app.config,
+            voice: parseInt(voice_id)
+        };
+    
+        await window.electronAPI.config.set(app.config);
+    };
+
+    dom.settings.voice.value = voice_id;
+    
+    app.audio.selected_voice = await window.electronAPI.voice.get(voice_id);
+    app.audio.element.setAttribute(`src`, `data:audio/webm;base64,${app.audio.selected_voice.tracks[`100`]}`);
+};
+
+const selectRate = async function(rate) {
+    if (app.config.rate !== parseInt(rate)) {
+        app.config = {
+            ...app.config,
+            rate: parseInt(rate)
         };
 
-        const names = Object.keys(voice.tracks);
+        await window.electronAPI.config.set(app.config);
+    };
+    
+    dom.settings.rate.value = rate;
+    dom.settings.rate.nextElementSibling.innerText = `${rate}%`;
+};
 
-        audio.element.setAttribute(`src`, `data:audio/webm;base64,${voice.tracks[names[Math.floor(Math.random() * names.length)]]}`);
-        audio.element.load();
-
-        audio.element.volume = parseInt(config.volume) / 100;
-
-        if (config.rate) {
-            audio.element.playbackRate = parseInt(config.rate) / 100;
+const selectVolume = async function(volume) {
+    if (app.config.volume !== parseInt(volume)) {
+        app.config = {
+            ...app.config,
+            volume: parseInt(volume)
         };
 
-        audio.element.play();
+        await window.electronAPI.config.set(app.config);
+    };
+    
+    dom.settings.volume.value = volume;
+    dom.settings.volume.nextElementSibling.innerText = `${volume}%`;
+};
+
+
+const resetSelectedLocation = function() {
+    resetSelectedRoute();
+    
+    dom.editor.routes.innerHTML = `<div class="plug">Выберите локацию</div>`;
+};
+
+const resetSelectedRoute = function() {
+    resetSelectedWaypoint();
+
+    app.editor.selected_route = null;
+
+    dom.editor.waypoints.innerHTML = `<div class="plug">Выберите спецучасток</div>`;
+};
+
+const resetSelectedWaypoint = function() {
+    app.editor.selected_waypoint = null;
+
+    dom.editor.waypoint.distance.sel.value = 0;
+    dom.editor.commands.selected.innerHTML = `<div class="plug">Выберите путевую точку</div>`;
+};
+
+
+const getWaypointHtml = function(distance, commands) {
+    let text = ``;
+
+    for (const command of commands) {
+        text += ` - ${(app.commands.find(function(x) { return x.key === command })).value}`;
     };
 
-    if (action === `voice-select`) {
-        await editConfig({
-            voice: voice_id
-        });
+    return `${distance}м <span>${text}</span>`;
+};
 
-        await loadVoice(voice_id);
-    };
+const getWaypointIndex = function(distance) {
+    return app.editor.selected_route.pacenote.findIndex(function(x) {
+        return x.distance === distance;
+    });
+};
 
-    event.target.classList.remove(`loading`);
-    event.target.parentElement.classList.remove(`loading`);
+const getCommandIndex = function(command) {
+    return app.editor.selected_waypoint.commands.findIndex(function(x) {
+        return x === command;
+    }); 
+};
 
-    for (const button of elements.voices.list.querySelectorAll(`button[action]`)) {
-        button.disabled = false;
-    };
-});
+const sortWaypoints = function() {
+    return app.editor.selected_route.pacenote.sort(function(a, b) {
+        return a.distance - b.distance;
+    });  
+};
 
-elements.voices.load.addEventListener(`click`, async function() {
-    await loadVoices();
-});
+const redrawSelectedWaypoint = function() {
+    return dom.editor.waypoints.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`).innerHTML = getWaypointHtml(app.editor.selected_waypoint.distance, app.editor.selected_waypoint.commands);
+};
+
+const addCommandElement = function(command) {
+    let item = document.createElement(`div`);
+        item.classList.add(`item`, `sb`, `move`);
+        item.setAttribute(`command`, command);
+        item.setAttribute(`draggable`, true);
+        item.innerHTML = `
+            ${app.commands.find(function(x) { return x.key === command }).value}
+            <img class="delete" src="./assets/images/xmark.svg">
+        `;
+
+    dom.editor.commands.selected.append(item);
+};
 
 
-elements.header.minimize.addEventListener(`click`, async function() {
+dom.header.minimize.addEventListener(`click`, async function() {
     await window.electronAPI.window.minimize();
 });
 
-elements.header.close.addEventListener(`click`, async function() {
+dom.header.close.addEventListener(`click`, async function() {
     await window.electronAPI.window.close();
 });
 
 
-elements.preloader.external.faq.addEventListener(`click`, async function() {
+dom.preloader.link.addEventListener(`click`, async function() {
     await window.electronAPI.external.open(`https://rallyhub.ru/faq`);
 });
 
 
-window.electronAPI.onUpdateTelemetry(function(telemetry) {
-    const header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}m`;
+dom.settings.game.addEventListener(`change`, async function() {
+    await selectGame(this.value);
+});
 
-    if (elements.header.status.innerText !== header) {
-        elements.header.status.innerText = header;
-    };
+dom.settings.voice.addEventListener(`change`, async function() {
+    await selectVoice(this.value);
+});
 
-    const distance = telemetry.stage.distance;
+dom.settings.rate.addEventListener(`input`, async function() {
+    await selectRate(this.value);
+});
 
-    if (route.id !== telemetry.route.id || (distance <= 0 && audio.points.length > 1)) {
-        audio.points = [];
-        audio.playlist = [];
+dom.settings.volume.addEventListener(`input`, async function() {
+    await selectVolume(this.value);
+});
 
-        route.id = telemetry.route.id;
-        route.briefing = false;
+dom.settings.listen.addEventListener(`click`, async function() {
+    const commands = Object.keys(app.audio.selected_voice.tracks);
 
-        vehicle.tyre_state = {
-            fl: 0,
-            fr: 0,
-            rl: 0,
-            rr: 0
-        };
-    };
+    app.audio.element.setAttribute(`src`, `data:audio/webm;base64,${app.audio.selected_voice.tracks[commands[Math.floor(Math.random() * commands.length)]]}`);
+    app.audio.element.load();
 
-    if (!telemetry.route.pacenote) {
+    app.audio.element.volume = app.config.volume / 100;
+    app.audio.element.playbackRate = app.config.rate / 100;
+
+    await app.audio.element.play();
+});
+
+
+dom.editor.location.addEventListener(`change`, function() {
+    selectLocation(this.value);
+});
+
+dom.editor.routes.addEventListener(`click`, async function(event) {
+    if (!event.target.classList.contains(`item`)) {
         return false;
     };
 
-    if (!route.briefing) {
-        if (distance <= 0) {
-            const briefing_point = telemetry.route.pacenote.find(function(point) {
-                return point.distance === -1;
+    await selectRoute(event.target.getAttribute(`id`));
+});
+
+dom.editor.waypoints.addEventListener(`click`, function(event) {
+    if (!event.target.classList.contains(`item`)) {
+        return false;
+    };
+
+    selectWaypoint(event.target.getAttribute(`distance`));
+});
+
+dom.editor.route.open.addEventListener(`click`, async function(event) {
+    const route = await window.electronAPI.route.open();
+
+    if (!route) {
+        return false;
+    };
+
+    event.target.disabled = true;
+
+    await selectGame(route.game);
+    selectLocation(route.location);
+    await selectRoute(route.id);
+
+    event.target.disabled = false;
+});
+
+dom.editor.route.save.addEventListener(`click`, async function(event) {
+    if (!app.editor.selected_route) {
+        return false;  
+    };
+
+    event.target.disabled = true;
+    await window.electronAPI.route.save(app.editor.selected_route);
+    event.target.disabled = false;
+});
+
+dom.editor.route.suggest.addEventListener(`click`, async function(event) {
+    if (!app.editor.selected_route) {
+        return false;  
+    };
+
+    event.target.disabled = true;
+    event.target.innerText = `Отправка...`;
+    event.target.innerText = await window.electronAPI.route.suggest({ route_id: app.editor.selected_route.id, pacenote: app.editor.selected_route.pacenote }) ? `Отправлено` : `Ошибка`;
+
+    setTimeout(() => {
+        event.target.disabled = false;
+        event.target.innerText = `Отправить стенограмму на сервер`;
+    }, 2000);
+});
+
+dom.editor.waypoint.create.addEventListener(`click`, async function() {
+    const distance = parseInt(dom.editor.waypoint.distance.new.value);
+
+    app.editor.selected_route.pacenote.push({
+        distance: distance,
+        commands: []
+    });
+
+    sortWaypoints();
+
+    let item = document.createElement(`div`);
+        item.classList.add(`item`);
+        item.setAttribute(`distance`, distance);
+        item.innerHTML = `${distance}м`;
+    
+    const prev_waypoint = app.editor.selected_route.pacenote[getWaypointIndex(distance) - 1];
+
+    if (prev_waypoint) {
+        dom.editor.waypoints.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
+    } else {
+        dom.editor.waypoints.prepend(item);
+    };
+});
+
+dom.editor.waypoint.delete.addEventListener(`click`, async function() {
+    if (!app.editor.selected_waypoint) {
+        return false;
+    };
+
+    app.editor.selected_route.pacenote.splice(getWaypointIndex(app.editor.selected_waypoint.distance), 1);
+    dom.editor.waypoints.querySelector(`.list .item[distance="${app.editor.selected_waypoint.distance}"]`).remove();
+
+    resetSelectedWaypoint();
+});
+
+
+dom.editor.waypoint.distance.sel.addEventListener(`input`, async function() {
+    if (this.value.length < 1) {
+        return false;
+    };
+
+    const distance = parseInt(this.value);
+
+    let item = dom.editor.waypoints.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`);
+        item.setAttribute(`distance`, distance);
+        item.innerHTML = getWaypointHtml(distance, app.editor.selected_waypoint.commands);
+
+    app.editor.selected_waypoint.distance = distance;
+
+    sortWaypoints();
+    
+    const prev_waypoint = app.editor.selected_route.pacenote[getWaypointIndex(app.editor.selected_waypoint.distance) - 1];
+
+    if (prev_waypoint) {
+        dom.editor.waypoints.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
+    } else {
+        dom.editor.waypoints.prepend(item);
+    };
+});
+
+dom.editor.waypoint.distance.set.addEventListener(`click`, async function() {
+    dom.editor.waypoint.distance.new.value = Math.round(app.current_stage.completed_distance);
+});
+
+dom.editor.commands.selected.addEventListener(`dragstart`, (event) => {
+    event.target.classList.add(`selected`);
+})
+
+dom.editor.commands.selected.addEventListener(`dragend`, (event) => {
+    event.target.classList.remove(`selected`);
+});
+
+dom.editor.commands.selected.addEventListener(`dragover`, (event) => {
+    event.preventDefault();
+  
+    const selected = dom.editor.commands.selected.querySelector(`.selected`);
+    const under = event.target;
+
+    if (selected === under || !under.classList.contains(`item`)) {
+        return false;
+    };
+
+    const underpos = under.getBoundingClientRect();
+    
+    const next = (event.clientY < (underpos.y + underpos.height / 2)) ? under : under.nextElementSibling;
+  
+    if (next && selected === next.previousElementSibling || selected === next) {
+        return false;
+    };
+
+    dom.editor.commands.selected.insertBefore(selected, next);
+
+    app.editor.selected_waypoint.commands = [];
+
+    for (const item of dom.editor.commands.selected.querySelectorAll(`.item`)) {
+        app.editor.selected_waypoint.commands.push(item.getAttribute(`command`));
+    };
+
+    redrawSelectedWaypoint();
+});
+
+dom.editor.commands.selected.addEventListener(`click`, (event) => {
+    if (!event.target.classList.contains(`delete`)) {
+        return false;
+    };
+
+    app.editor.selected_waypoint.commands.splice(getCommandIndex(event.target.parentElement.getAttribute(`command`)), 1);
+
+    event.target.parentElement.remove();
+
+    redrawSelectedWaypoint();
+});
+
+dom.editor.commands.all.addEventListener(`click`, async function(event) {
+    if (!event.target.classList.contains(`item`) || !app.editor.selected_waypoint) {
+        return false;
+    };
+
+    const command = event.target.getAttribute(`command`);
+
+    app.editor.selected_waypoint.commands.push(command);
+
+    addCommandElement(command);
+    redrawSelectedWaypoint();
+});
+
+
+window.electronAPI.onUpdateTelemetry(function(telemetry) {
+    const header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}м`;
+
+    if (dom.header.status.innerText !== header) {
+        dom.header.status.innerText = header;
+    };
+
+    app.current_stage.completed_distance = telemetry.stage.distance;
+
+    if (app.current_stage.route_id !== telemetry.route.id || (app.current_stage.completed_distance <= 0 && app.current_stage.completed_waypoints.length > 1)) {
+        app.current_stage = {
+            route_id: telemetry.route.id,
+            playlist: [],
+            briefing: false,
+            completed_distance: 0,
+            completed_waypoints: [],
+            vehicle: {
+                tyre_state: {
+                    fl: 0,
+                    fr: 0,
+                    rl: 0,
+                    rr: 0
+                }
+            }
+        };
+    };
+
+    let pacenote;
+
+    if (app.editor.selected_route) {
+        pacenote = app.editor.selected_route.pacenote;
+    } else {
+        pacenote = telemetry.route.pacenote;
+    };
+
+    if (!pacenote) {
+        return false;
+    };
+
+    if (!app.current_stage.briefing) {
+        if (app.current_stage.completed_distance <= 0) {
+            const briefpoint = pacenote.find(function(briefpoint) {
+                return briefpoint.distance === 0;
             });
 
-            if (briefing_point) {
-                audio.points.push(briefing_point.distance);
-                audio.playlist = audio.playlist.concat(briefing_point.tracks);
+            if (briefpoint) {
+                app.current_stage.completed_waypoints.push(briefpoint.distance);
+                app.current_stage.playlist = app.current_stage.playlist.concat(briefpoint.commands);
             };
         };
 
-        route.briefing = true;
+        app.current_stage.briefing = true;
     };
 
-    const points = telemetry.route.pacenote.filter(function(point) {
-        return !audio.points.includes(point.distance) && point.distance > distance && point.distance < (distance + 2);
+    const waypoints = pacenote.filter(function(waypoint) {
+        return !app.current_stage.completed_waypoints.includes(waypoint.distance) && waypoint.distance > app.current_stage.completed_distance && waypoint.distance < (app.current_stage.completed_distance + 2);
     });
 
-    if (points.length > 0) {
-        audio.points.push(points[0].distance);
-        audio.playlist = audio.playlist.concat(points[0].tracks);
+    if (waypoints.length > 0) {
+        app.current_stage.completed_waypoints.push(waypoints[0].distance);
+        app.current_stage.playlist = app.current_stage.playlist.concat(waypoints[0].commands);
     };
 
     if (telemetry.vehicle?.tyre_state) {
         for (let [tyre, state] of Object.entries(telemetry.vehicle.tyre_state)) {
-            if (vehicle.tyre_state[tyre] !== state) {
-                if (state === 1 || (state === 2 && vehicle.tyre_state[tyre] !== 1)) {
-                    audio.playlist.push(`puncture_${tyre}`);
+            if (app.current_stage.vehicle.tyre_state[tyre] !== state) {
+                if (state === 1 || (state === 2 && app.current_stage.vehicle.tyre_state[tyre] !== 1)) {
+                    app.current_stage.playlist.push(`puncture_${tyre}`);
                 };
 
-                vehicle.tyre_state[tyre] = state;
+                app.current_stage.vehicle.tyre_state[tyre] = state;
             };
         };
     };
 });
 
 window.electronAPI.onAppReady(async function() {
-    elements.preloader.container.remove();
+    app.config = await window.electronAPI.config.get();
+    app.routes = await window.electronAPI.routes.get();
+    app.voices = await window.electronAPI.voices.get();
+    app.commands = await window.electronAPI.commands.get();
 
-    if (config.voice) {
-        await loadVoice(config.voice);
+    for (const voice of app.voices) {
+        let option = document.createElement(`option`);
+            option.setAttribute(`value`, voice.id);
+            option.innerText = voice.name;
+
+        if (app.config.voice === voice.id) {
+            option.setAttribute(`selected`, true);
+        };
+
+        dom.settings.voice.append(option);
     };
 
-    const voice_filters = await window.electronAPI.voices.filters();
+    for (const command of app.commands) {
+        if (command.special) {
+            continue;
+        };
 
-    for (const author of voice_filters.authors) {
-        let option = document.createElement(`option`);
-            option.setAttribute(`value`, author);
-            option.innerText = author;
+        let item = document.createElement(`div`);
+            item.classList.add(`item`);
+            item.setAttribute(`command`, command.key);
+            item.innerText = command.value;
+
+        dom.editor.commands.all.append(item);
+    };
+
+    if (app.config.game) {
+        await selectGame(app.config.game);
+    };
+
+    if (app.config.voice) {
+        await selectVoice(app.config.voice);
+    };
+
+    if (app.config.rate) {
+        await selectRate(app.config.rate);
+    };
     
-        elements.voices.author.append(option);
+    if (app.config.volume) {
+        await selectVolume(app.config.volume);
     };
-
-    for (const language of voice_filters.languages) {
-        let option = document.createElement(`option`);
-            option.setAttribute(`value`, language);
-            option.innerText = language.toUpperCase();
-
-        elements.voices.language.append(option);
-    };
-
-    await loadVoices();
+    
+    dom.preloader.container.remove();
 
     setInterval(function() {
-        if (audio.playlist.length < 1 || (audio.element.currentTime > 0 && !audio.element.ended)) {
+        if (app.current_stage.playlist.length < 1 || (app.audio.element.currentTime > 0 && !app.audio.element.ended)) {
             return false;
         };
 
-        if (audio.voice.tracks?.[audio.playlist[0]]) {
-            audio.element.setAttribute(`src`, `data:audio/webm;base64,${audio.voice.tracks[audio.playlist[0]]}`);
-            audio.element.load();
+        if (app.audio.selected_voice.tracks[app.current_stage.playlist[0]]) {
+            app.audio.element.setAttribute(`src`, `data:audio/webm;base64,${app.audio.selected_voice.tracks[app.current_stage.playlist[0]]}`);
+            app.audio.element.load();
 
-            audio.element.volume = parseInt(config.volume) / 100;
+            app.audio.element.volume = app.config.volume / 100;
+            app.audio.element.playbackRate = app.config.rate / 100;
 
-            if (config.rate) {
-                audio.element.playbackRate = parseInt(config.rate) / 100;
-            };
-
-            audio.element.play();
+            app.audio.element.play();
         };
 
-        audio.playlist.splice(0, 1);
+        app.current_stage.playlist.splice(0, 1);
     }, 50);
 });
-
-
-if (config.game) {
-    elements.settings.game.value = config.game;
-};
-
-if (config.volume) {
-    elements.settings.volume.value = config.volume;
-    elements.settings.volume.nextElementSibling.innerText = `${config.volume}%`;
-};
-
-if (config.rate) {
-    elements.settings.rate.value = config.rate;
-    elements.settings.rate.nextElementSibling.innerText = `${config.rate}%`;
-};

@@ -1,5 +1,5 @@
 {
-    "name": "rallyhub.basic",
+    "name": "rallyhub",
     "author": "eugene27th",
     "version": "0.0.0",
     "main": "./app/index.js",
@@ -16,7 +16,7 @@
         "electron-builder": "^24.13.3"
     },
     "build": {
-        "appId": "27thsquad.rallyhub.basic",
+        "appId": "27thsquad.rallyhub",
         "extraFiles": ["config.json"],
         "electronLanguages": ["en-US"]
     }

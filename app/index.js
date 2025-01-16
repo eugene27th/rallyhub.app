@@ -1,100 +1,182 @@
-const log = require(`./logger`);
-const utils = require(`./utils`);
-const fs = require(`fs/promises`);
-const parser = require(`./parser`);
-const installer = require(`./installer`);
-const socket = require(`dgram`).createSocket(`udp4`);
-
 const { shell } = require(`electron`);
-const { app, BrowserWindow, ipcMain } = require(`electron/main`);
-
+const { app, BrowserWindow, ipcMain, dialog } = require(`electron/main`);
 
 if (!app.requestSingleInstanceLock()) {
     return app.quit();
 };
 
-
 // globalThis.path = app.getAppPath(); // start
 globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
 globalThis.config = require(`${globalThis.path}/config.json`);
-globalThis.domain = globalThis.config.domain || `rallyhub.ru`;
+globalThis.url = { api: `https://api.${globalThis.config.domain || `rallyhub.ru`}`, cdn: `https://cdn.${globalThis.config.domain || `rallyhub.ru`}` };
+globalThis.routes = { id: {}, game: {} };
+globalThis.voices = {};
+
+const fs = require(`fs/promises`);
+const socket = require(`dgram`).createSocket(`udp4`);
+
+const fetch = require(`./fetch`);
+const logger = require(`./logger`);
+const parser = require(`./parser`);
+const installer = require(`./installer`);
 
 
-ipcMain.handle(`config:get`, function(event) {
+ipcMain.handle(`config:get`, function() {
     return globalThis.config;
 });
 
-ipcMain.handle(`config:set`, async function(event, new_config) {
-    globalThis.config = new_config;
+ipcMain.handle(`config:set`, async function(event, config) {
+    globalThis.config = config;
 });
 
 ipcMain.handle(`voice:get`, async function(event, voice_id) {
-    if (globalThis.voices.requesting) {
-        return false;
+    if (globalThis.voices[voice_id]) {
+        return globalThis.voices[voice_id];
     };
 
-    if (globalThis.voices.list[voice_id] !== undefined) {
-        return globalThis.voices.list[voice_id];
-    };
-
-    globalThis.voices.requesting = true;
-
-    const url = `https://api.${globalThis.domain}/voice/${voice_id}`;
-
-    log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
-
-    const response = await utils.fetcha(url, {
-        method: `GET`
-    }).catch(function() {
-        log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+    const response = await fetch.send(`${globalThis.url.api}/voice/${voice_id}`).catch(function() {
         return null;
     });
 
-    if (response && response.status === 200) {
-        globalThis.voices.list[voice_id] = await response.json();
-    } else {
-        log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
-        globalThis.voices.list[voice_id] = null;
+    if (response?.status !== 200) {
+        await logger.log(`Ошибка при получении озвучки. Путь: "${globalThis.url.api}/voice/${voice_id}". Статус: ${response?.status}.`);
+        return false;
     };
 
-    globalThis.voices.requesting = false;
-
-    return globalThis.voices.list[voice_id];
+    return globalThis.voices[voice_id] = await response.json();
 });
 
-ipcMain.handle(`voices:get`, async function(event, options) {
-    const url = `https://api.${globalThis.domain}/voices${options ? `?${new URLSearchParams(options)}` : ``}`;
-
-    log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
-
-    const response = await utils.fetcha(url, {
-        method: `GET`
-    }).catch(function() {
-        log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
-        return [];
+ipcMain.handle(`voices:get`, async function() {
+    const response = await fetch.send(`${globalThis.url.api}/voices`).catch(function() {
+        return null;
     });
 
-    if (!response || response.status !== 200) {
-        log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
-        return [];
+    if (response?.status !== 200) {
+        await logger.log(`Ошибка при получении списка озвучек. Путь: "${globalThis.url.api}/voices". Статус: ${response?.status}.`);
+        return false;
     };
 
     return await response.json();
 });
 
-ipcMain.handle(`voices:filters:get`, async function(event) {
-    const url = `https://api.${globalThis.domain}/voices/filters`;
+ipcMain.handle(`route:get`, async function(event, route_id) {
+    if (globalThis.routes.id[route_id]) {
+        return globalThis.routes.id[route_id];
+    };
 
-    const response = await utils.fetcha(url, {
-        method: `GET`
-    }).catch(function() {
-        log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
-        return [];
+    const response = await fetch.send(`${globalThis.url.api}/route/${route_id}`).catch(function() {
+        return null;
     });
 
-    if (!response || response.status !== 200) {
-        log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
-        return [];
+    if (response?.status !== 200) {
+        await logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/${route_id}". Статус: ${response?.status}.`);
+        return false;
+    };
+
+    return globalThis.routes.id[route_id] = await response.json();
+});
+
+ipcMain.handle(`route:open`, async function() {
+    const response = await dialog.showOpenDialog(globalThis.window, {
+        properties: ['openFile'],
+        filters: [
+            {
+                name: 'JSON',
+                extensions: ['json']
+            }
+        ]
+    }).catch(function() {
+        return null;
+    });
+
+    if (!response || response.canceled) {
+        return null;
+    };
+
+    const file = await fs.readFile(response.filePaths[0]).catch(async function(error) {
+        await logger.log(`Ошибка при открытии файла. Путь: "${response.filePaths[0]}". Код: ${error.code}.`);
+        return null;
+    });
+
+    if (!file) {
+        return null;
+    };
+
+    try {
+        // todo: проверять корректность схемы
+        return JSON.parse(file);
+    } catch (error) {
+        await logger.log(`Ошибка при парсинге файла. Путь: "${response.filePaths[0]}".`);
+        return null;
+    };
+});
+
+ipcMain.handle(`route:save`, async function(event, route) {
+    const response = await dialog.showSaveDialog(globalThis.window, {
+        defaultPath: `${route.location} - ${route.name}.json`,
+        properties: ['openFile'],
+        filters: [
+            {
+                name: 'JSON',
+                extensions: ['json']
+            }
+        ]
+    }).catch(function() {
+        return false;
+    });
+
+    if (!response || response.canceled) {
+        return false;
+    };
+
+    await fs.writeFile(response.filePath, JSON.stringify(route, null, 4)).catch(async function(error) {
+        await logger.log(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}/config.json". Код: ${error.code}.`);
+        return false;
+    });
+
+    return true;
+});
+
+ipcMain.handle(`route:suggest`, async function(event, data) {
+    const response = await fetch.send(`${globalThis.url.api}/route/suggest`, {
+        method: `POST`,
+        headers: {
+            [`Content-Type`]: `application/json`
+        },
+        body: JSON.stringify(data)
+    }).catch(function() {
+        return null;
+    });
+
+    if (response?.status !== 200) {
+        await logger.log(`Ошибка при отправлении спецучастка. Путь: "${globalThis.url.api}/route/suggest". Статус: ${response?.status}.`);
+        return false;
+    };
+
+    return true;
+});
+
+ipcMain.handle(`routes:get`, async function() {
+    const response = await fetch.send(`${globalThis.url.api}/routes`).catch(function() {
+        return null;
+    });
+
+    if (response?.status !== 200) {
+        await logger.log(`Ошибка при получении списка спецучастков. Путь: "${globalThis.url.api}/routes". Статус: ${response?.status}.`);
+        return false;
+    };
+
+    return await response.json();
+});
+
+ipcMain.handle(`commands:get`, async function() {
+    const response = await fetch.send(`${globalThis.url.api}/commands`).catch(function() {
+        return null;
+    });
+
+    if (response?.status !== 200) {
+        await logger.log(`Ошибка при получении списка треков. Путь: "${globalThis.url.api}/commands". Статус: ${response?.status}.`);
+        return false;
     };
 
     return await response.json();
@@ -104,28 +186,18 @@ ipcMain.handle(`external:open`, async function(event, url) {
     return shell.openExternal(url);
 });
 
-ipcMain.handle(`window:close`, async function(event) {
+ipcMain.handle(`window:close`, async function() {
     return globalThis.window.close();
 });
 
-ipcMain.handle(`window:minimize`, async function(event) {
+ipcMain.handle(`window:minimize`, async function() {
     return globalThis.window.minimize();
 });
 
 
 app.whenReady().then(async function() {
-    globalThis.routes = {
-        requesting: false,
-        list: {}
-    };
-
-    globalThis.voices = {
-        requesting: false,
-        list: {}
-    };
-
     globalThis.window = new BrowserWindow({
-        width: 1100,
+        width: 1200,
         height: 800,
         resizable: false,
         useContentSize: true,
@@ -139,25 +211,8 @@ app.whenReady().then(async function() {
         }
     });
 
-    globalThis.window.on(`closed`, async function() {
-        log.info(`[CODE: INDEX_WRITEFILE] [PATH: ${globalThis.path}/config.json]`);
-
-        await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(function(error) {
-            log.error(`[CODE: INDEX_WRITEFILE] [FS: ${error.code}] [PATH: ${globalThis.path}/config.json]`);
-        });
-
-        app.quit();
-    });
-
     globalThis.window.webContents.on(`did-finish-load`, async function() {
-        const restart = await installer.app().catch(function() {
-            log.error(`[CODE: INDEX_INSTALL_APP]`);
-            return false;
-        });
-
-        if (restart) {
-            await log.info(`[CODE: INDEX_RESTART_AFTER_UPDATE]`);
-
+        if (await installer.app().catch(async function() { return false })) {
             app.relaunch();
             app.exit();
         };
@@ -168,6 +223,10 @@ app.whenReady().then(async function() {
         globalThis.window.webContents.send(`ready`);
 
         socket.on(`message`, async function(message) {
+            if (globalThis.telemetry_awaiting) {
+                return false;
+            };
+
             if (!globalThis.config.game) {
                 return false;
             };
@@ -190,52 +249,38 @@ app.whenReady().then(async function() {
                 return false;
             };
 
-            if (globalThis.routes.requesting) {
-                return false;
-            };
+            if (globalThis.routes.game[ingame_id] === undefined) {
+                globalThis.telemetry_awaiting = true;
 
-            const route_key = `${globalThis.config.game}-${ingame_id}`;
-
-            if (globalThis.routes.list[route_key] === undefined) {
-                globalThis.routes.requesting = true;
-
-                const url = `https://api.${globalThis.domain}/route/${globalThis.config.game}/${ingame_id}`;
-
-                log.info(`[CODE: INDEX_FETCH] [GET: ${url}]`);
-
-                const response = await utils.fetcha(url, {
-                    method: `GET`
-                }).catch(function() {
-                    log.error(`[CODE: INDEX_FETCH_RESPONSE] [GET: ${url}]`);
+                const response = await fetch.send(`${globalThis.url.api}/route/game/${ingame_id}`).catch(function() {
                     return null;
                 });
 
-                if (response && response.status === 200) {
-                    globalThis.routes.list[route_key] = await response.json();
-                } else {
-                    log.error(`[CODE: INDEX_FETCH_RESPONSE_STATUS] [GET: ${url}]`);
-                    globalThis.routes.list[route_key] = null;
+                if (response?.status !== 200) {
+                    await logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/game/${ingame_id}". Статус: ${response?.status}.`);
+                    return null;
                 };
 
-                globalThis.routes.requesting = false;
+                globalThis.routes.game[ingame_id] = await response.json();
+                globalThis.telemetry_awaiting = false;
             };
 
-            if (!globalThis.routes.list[route_key]) {
+            if (!globalThis.routes.game[ingame_id]) {
                 return false;
             };
 
             globalThis.window.webContents.send(`telemetry`, {
                 route: {
-                    id: globalThis.routes.list[route_key].id,
-                    location: globalThis.routes.list[route_key].location,
-                    name: globalThis.routes.list[route_key].name,
-                    pacenote: globalThis.routes.list[route_key].pacenote
+                    id: globalThis.routes.game[ingame_id].id,
+                    name: globalThis.routes.game[ingame_id].name,
+                    location: globalThis.routes.game[ingame_id].location,
+                    pacenote: globalThis.routes.game[ingame_id].pacenote
                 },
                 ...telemetry
             });
         });
 
-        socket.bind(globalThis.config.port || 20220);
+        socket.bind(globalThis.config.port);
     });
 
     globalThis.window.loadFile(`./window/index.html`);
@@ -245,17 +290,17 @@ app.whenReady().then(async function() {
 });
 
 app.on(`second-instance`, function() {
-    if (globalThis.window) {
-        if (globalThis.window.isMinimized()) {
-            globalThis.window.restore();
-        };
-
-        return globalThis.window.focus();
+    if (globalThis.window.isMinimized()) {
+        globalThis.window.restore();
     };
+
+    return globalThis.window.focus();
 });
 
-app.on(`window-all-closed`, function() {
-    if (process.platform !== `darwin`) {
-        app.quit();
-    };
+app.on(`window-all-closed`, async function() {
+    await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(async function(error) {
+        await logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
+    });
+
+    return app.quit();
 });

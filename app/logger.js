@@ -24,23 +24,19 @@ const log = async function(message) {
 
         if (rows.length > 1000) {
             rows.push(row);
-            return await fs.writeFile(path, rows.slice(50).join(`\n`));
+
+            return await fs.writeFile(path, rows.slice(50).join(`\n`)).catch(function(error) {
+                return false;
+            });
         };
     };
 
-    return await fs.appendFile(path, row);
-};
-
-const info = async function(message) {
-    return await log(`[INFO] ${message}`);
-};
-
-const error = async function(message) {
-    return await log(`[ERROR] ${message}`);
+    return await fs.appendFile(path, row).catch(function(error) {
+        return false;
+    });
 };
 
 
 module.exports = {
-    info,
-    error
+    log
 };
