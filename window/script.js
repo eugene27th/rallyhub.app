@@ -154,9 +154,7 @@ const selectRoute = async function(id) {
     };
 
     dom.editor.routes.querySelector(`.item[id="${id}"]`).classList.add(`selected`);
-
     app.editor.selected_route = await window.electronAPI.route.get(id);
-
     dom.editor.waypoints.innerHTML = ``;
 
     for (const waypoint of app.editor.selected_route.pacenote) {
@@ -194,6 +192,9 @@ const selectWaypoint = function(distance) {
 
 
 const selectVoice = async function(voice_id) {
+    dom.settings.voice.disabled = true;
+    dom.settings.listen.disabled = true;
+
     if (app.config.voice !== parseInt(voice_id)) {
         app.config = {
             ...app.config,
@@ -207,6 +208,9 @@ const selectVoice = async function(voice_id) {
     
     app.audio.selected_voice = await window.electronAPI.voice.get(voice_id);
     app.audio.element.setAttribute(`src`, `data:audio/webm;base64,${app.audio.selected_voice.tracks[`100`]}`);
+
+    dom.settings.voice.disabled = false;
+    dom.settings.listen.disabled = false;
 };
 
 const selectRate = async function(rate) {
@@ -248,7 +252,6 @@ const resetSelectedRoute = function() {
     resetSelectedWaypoint();
 
     app.editor.selected_route = null;
-
     dom.editor.waypoints.innerHTML = `<div class="plug">Выберите спецучасток</div>`;
 };
 
@@ -288,8 +291,60 @@ const sortWaypoints = function() {
     });  
 };
 
-const redrawSelectedWaypoint = function() {
-    return dom.editor.waypoints.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`).innerHTML = getWaypointHtml(app.editor.selected_waypoint.distance, app.editor.selected_waypoint.commands);
+const updateSelectedWaypoint = function(distance) {
+    let item = dom.editor.waypoints.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`);
+
+    if (distance !== undefined) {
+        const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
+            return x.distance === distance;
+        });
+
+        if (exist > -1) {
+            distance += ((app.editor.selected_waypoint.distance - distance) > 0) ? -1 : 1;
+            dom.editor.waypoint.distance.sel.value = distance;
+        };
+
+        app.editor.selected_waypoint.distance = distance;
+        sortWaypoints();
+        item.setAttribute(`distance`, distance);
+        appendWaypointElement(distance, item);
+    };
+
+    item.innerHTML = getWaypointHtml(distance || app.editor.selected_waypoint.distance, app.editor.selected_waypoint.commands);
+};
+
+const addWaypoint = function(distance) {
+    const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
+        return x.distance === distance;
+    });
+
+    if (exist > -1) {
+        return false;
+    };
+
+    app.editor.selected_route.pacenote.push({
+        distance: distance,
+        commands: []
+    });
+
+    sortWaypoints();
+
+    let item = document.createElement(`div`);
+        item.classList.add(`item`);
+        item.setAttribute(`distance`, distance);
+        item.innerHTML = `${distance}м`;
+
+    appendWaypointElement(distance, item);
+};
+
+const appendWaypointElement = function(distance, item) {
+    const prev_waypoint = app.editor.selected_route.pacenote[getWaypointIndex(distance) - 1];
+
+    if (prev_waypoint) {
+        dom.editor.waypoints.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
+    } else {
+        dom.editor.waypoints.prepend(item);
+    };
 };
 
 const addCommandElement = function(command) {
@@ -411,27 +466,7 @@ dom.editor.route.suggest.addEventListener(`click`, async function(event) {
 });
 
 dom.editor.waypoint.create.addEventListener(`click`, async function() {
-    const distance = parseInt(dom.editor.waypoint.distance.new.value);
-
-    app.editor.selected_route.pacenote.push({
-        distance: distance,
-        commands: []
-    });
-
-    sortWaypoints();
-
-    let item = document.createElement(`div`);
-        item.classList.add(`item`);
-        item.setAttribute(`distance`, distance);
-        item.innerHTML = `${distance}м`;
-    
-    const prev_waypoint = app.editor.selected_route.pacenote[getWaypointIndex(distance) - 1];
-
-    if (prev_waypoint) {
-        dom.editor.waypoints.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
-    } else {
-        dom.editor.waypoints.prepend(item);
-    };
+    addWaypoint(parseInt(dom.editor.waypoint.distance.new.value))
 });
 
 dom.editor.waypoint.delete.addEventListener(`click`, async function() {
@@ -445,29 +480,12 @@ dom.editor.waypoint.delete.addEventListener(`click`, async function() {
     resetSelectedWaypoint();
 });
 
-
 dom.editor.waypoint.distance.sel.addEventListener(`input`, async function() {
     if (this.value.length < 1) {
         return false;
     };
 
-    const distance = parseInt(this.value);
-
-    let item = dom.editor.waypoints.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`);
-        item.setAttribute(`distance`, distance);
-        item.innerHTML = getWaypointHtml(distance, app.editor.selected_waypoint.commands);
-
-    app.editor.selected_waypoint.distance = distance;
-
-    sortWaypoints();
-    
-    const prev_waypoint = app.editor.selected_route.pacenote[getWaypointIndex(app.editor.selected_waypoint.distance) - 1];
-
-    if (prev_waypoint) {
-        dom.editor.waypoints.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
-    } else {
-        dom.editor.waypoints.prepend(item);
-    };
+    updateSelectedWaypoint(parseInt(this.value));
 });
 
 dom.editor.waypoint.distance.set.addEventListener(`click`, async function() {
@@ -508,7 +526,7 @@ dom.editor.commands.selected.addEventListener(`dragover`, (event) => {
         app.editor.selected_waypoint.commands.push(item.getAttribute(`command`));
     };
 
-    redrawSelectedWaypoint();
+    updateSelectedWaypoint();
 });
 
 dom.editor.commands.selected.addEventListener(`click`, (event) => {
@@ -517,10 +535,8 @@ dom.editor.commands.selected.addEventListener(`click`, (event) => {
     };
 
     app.editor.selected_waypoint.commands.splice(getCommandIndex(event.target.parentElement.getAttribute(`command`)), 1);
-
     event.target.parentElement.remove();
-
-    redrawSelectedWaypoint();
+    updateSelectedWaypoint();
 });
 
 dom.editor.commands.all.addEventListener(`click`, async function(event) {
@@ -533,7 +549,7 @@ dom.editor.commands.all.addEventListener(`click`, async function(event) {
     app.editor.selected_waypoint.commands.push(command);
 
     addCommandElement(command);
-    redrawSelectedWaypoint();
+    updateSelectedWaypoint();
 });
 
 
@@ -564,13 +580,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         };
     };
 
-    let pacenote;
-
-    if (app.editor.selected_route) {
-        pacenote = app.editor.selected_route.pacenote;
-    } else {
-        pacenote = telemetry.route.pacenote;
-    };
+    const pacenote = app.editor.selected_route ? app.editor.selected_route.pacenote : telemetry.route.pacenote;
 
     if (!pacenote) {
         return false;
@@ -618,6 +628,15 @@ window.electronAPI.onAppReady(async function() {
     app.routes = await window.electronAPI.routes.get();
     app.voices = await window.electronAPI.voices.get();
     app.commands = await window.electronAPI.commands.get();
+
+    if (!app.config.voice) {
+        let option = document.createElement(`option`);
+            option.setAttribute(`disabled`, true);
+            option.setAttribute(`selected`, true);
+            option.innerText = `Выберите озвучку`;
+
+        dom.settings.voice.append(option);
+    };
 
     for (const voice of app.voices) {
         let option = document.createElement(`option`);
