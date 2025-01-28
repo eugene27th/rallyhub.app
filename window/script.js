@@ -142,7 +142,7 @@ const selectLocation = function(location) {
     };
 };
 
-const selectRoute = async function(id) {
+const selectRoute = async function(id, route) {
     dom.editor.routes.classList.add(`disabled`);
     
     resetSelectedWaypoint();
@@ -154,7 +154,7 @@ const selectRoute = async function(id) {
     };
 
     dom.editor.routes.querySelector(`.item[id="${id}"]`).classList.add(`selected`);
-    app.editor.selected_route = await window.electronAPI.route.get(id);
+    app.editor.selected_route = route ? route : await window.electronAPI.route.get(id);
     dom.editor.waypoints.innerHTML = ``;
 
     for (const waypoint of app.editor.selected_route.pacenote) {
@@ -438,7 +438,7 @@ dom.editor.route.open.addEventListener(`click`, async function(event) {
 
     await selectGame(route.game);
     selectLocation(route.location);
-    await selectRoute(route.id);
+    await selectRoute(route.id, route);
 
     event.target.disabled = false;
 });
