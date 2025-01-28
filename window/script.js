@@ -170,13 +170,16 @@ const selectRoute = async function(id) {
 };
 
 const selectWaypoint = function(distance) {
-    const selected_item = dom.editor.waypoints.querySelector(`.item.selected`);
+    const exist_selected_item = dom.editor.waypoints.querySelector(`.item.selected`);
 
-    if (selected_item) {
-        selected_item.classList.remove(`selected`);
+    if (exist_selected_item) {
+        exist_selected_item.classList.remove(`selected`);
     };
 
-    dom.editor.waypoints.querySelector(`.item[distance="${distance}"]`).classList.add(`selected`);
+    const selected_item = dom.editor.waypoints.querySelector(`.item[distance="${distance}"]`);
+
+    selected_item.classList.add(`selected`);
+    selected_item.scrollIntoView({ block: `center` });
 
     app.editor.selected_waypoint = app.editor.selected_route.pacenote.find(function(x) {
         return x.distance === parseInt(distance);
@@ -459,14 +462,15 @@ dom.editor.route.suggest.addEventListener(`click`, async function(event) {
     event.target.innerText = `Отправка...`;
     event.target.innerText = await window.electronAPI.route.suggest({ route_id: app.editor.selected_route.id, pacenote: app.editor.selected_route.pacenote }) ? `Отправлено` : `Ошибка`;
 
-    setTimeout(() => {
+    setTimeout(function() {
         event.target.disabled = false;
         event.target.innerText = `Отправить стенограмму на сервер`;
     }, 2000);
 });
 
 dom.editor.waypoint.create.addEventListener(`click`, async function() {
-    addWaypoint(parseInt(dom.editor.waypoint.distance.new.value))
+    addWaypoint(parseInt(dom.editor.waypoint.distance.new.value));
+    selectWaypoint(dom.editor.waypoint.distance.new.value);
 });
 
 dom.editor.waypoint.delete.addEventListener(`click`, async function() {
@@ -492,15 +496,15 @@ dom.editor.waypoint.distance.set.addEventListener(`click`, async function() {
     dom.editor.waypoint.distance.new.value = Math.round(app.current_stage.completed_distance);
 });
 
-dom.editor.commands.selected.addEventListener(`dragstart`, (event) => {
+dom.editor.commands.selected.addEventListener(`dragstart`, function(event) {
     event.target.classList.add(`selected`);
 })
 
-dom.editor.commands.selected.addEventListener(`dragend`, (event) => {
+dom.editor.commands.selected.addEventListener(`dragend`, function(event) {
     event.target.classList.remove(`selected`);
 });
 
-dom.editor.commands.selected.addEventListener(`dragover`, (event) => {
+dom.editor.commands.selected.addEventListener(`dragover`, function(event) {
     event.preventDefault();
   
     const selected = dom.editor.commands.selected.querySelector(`.selected`);
@@ -529,7 +533,7 @@ dom.editor.commands.selected.addEventListener(`dragover`, (event) => {
     updateSelectedWaypoint();
 });
 
-dom.editor.commands.selected.addEventListener(`click`, (event) => {
+dom.editor.commands.selected.addEventListener(`click`, function(event) {
     if (!event.target.classList.contains(`delete`)) {
         return false;
     };
@@ -550,6 +554,18 @@ dom.editor.commands.all.addEventListener(`click`, async function(event) {
 
     addCommandElement(command);
     updateSelectedWaypoint();
+});
+
+
+document.addEventListener(`keydown`, function(event) {
+    if (event.code === `Enter`) {
+        addWaypoint(parseInt(dom.editor.waypoint.distance.new.value));
+        selectWaypoint(dom.editor.waypoint.distance.new.value);
+    };
+
+    if (event.code === `Space`) {
+        dom.editor.waypoint.distance.new.value = Math.round(app.current_stage.completed_distance);
+    };
 });
 
 
@@ -580,7 +596,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
         };
     };
 
-    const pacenote = app.editor.selected_route ? app.editor.selected_route.pacenote : telemetry.route.pacenote;
+    const pacenote = (app.editor.selected_route && app.editor.selected_route.id === telemetry.route.id) ? app.editor.selected_route.pacenote : telemetry.route.pacenote;
 
     if (!pacenote) {
         return false;

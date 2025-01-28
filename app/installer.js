@@ -91,6 +91,7 @@ const wrc23 = async function() {
     let config = JSON.parse(config_file.toString());
     const udp_packet = config.udp.packets.find(x => x.structure === `rallyhub`);
 
+    // todo: смотреть все пакеты и их порты на совпадение
     if (!udp_packet || udp_packet.port !== globalThis.config.port) {
         await logger.log(`Обновление конфигурационного файла телеметрии WRC23.`);
 

@@ -300,7 +300,5 @@ app.on(`second-instance`, function() {
 app.on(`window-all-closed`, async function() {
     await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(async function(error) {
         await logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
-    });
-
-    return app.quit();
+    }).finally(app.quit);
 });
