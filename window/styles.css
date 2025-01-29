@@ -12,6 +12,8 @@
     --color-light: #949BA4;
     --color-dark: #1E1E1E;
     --color-grey-dark: #313338;
+    --color-green: #376c37;
+    --color-green-light: #438f43;
 }
 
 
@@ -89,6 +91,18 @@ button {
 
         img {
             opacity: 1;
+        }
+    }
+
+    &.active {
+        background-color: var(--color-green);
+
+        img {
+            opacity: 1;
+        }
+
+        &:hover {
+            background-color: var(--color-green-light);
         }
     }
 
@@ -435,8 +449,32 @@ input {
 
             .name {
                 margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
                 font-weight: 500;
                 user-select: none;
+
+                .buttons {
+                    display: flex;
+                    align-items: center;
+
+                    button {
+                        width: 16px;
+                        height: 16px;
+                        padding: 0;
+                        margin-right: 4px;
+    
+                        &:last-child {
+                            margin-right: 0;
+                        }
+
+                        img {
+                            width: 10px;
+                            height: 10px;
+                        }
+                    }
+                }
             }
 
             .list {

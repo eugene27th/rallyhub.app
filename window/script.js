@@ -18,18 +18,23 @@ const dom = {
     editor: {
         location: document.querySelector(`.container .editor .location select`),
         routes: document.querySelector(`.container .editor .routes .list`),
-        waypoints: document.querySelector(`.container .editor .waypoints .list`),
+        waypoints: {
+            list: document.querySelector(`.container .editor .waypoints .list`),
+            options: {
+                scroll: document.querySelector(`.container .editor .waypoints .name .buttons button[action=waypoints-scroll-into-view]`)
+            }
+        },
         route: {
             open: document.querySelector(`.container .editor button[action=route-open]`),
             save: document.querySelector(`.container .editor button[action=route-save]`),
             suggest: document.querySelector(`.container .editor button[action=route-suggest]`),
         },
         waypoint: {
-            create: document.querySelector(`.container .editor button[action=point-create]`),
-            delete: document.querySelector(`.container .editor button[action=point-delete]`),
+            create: document.querySelector(`.container .editor button[action=waypoint-create]`),
+            delete: document.querySelector(`.container .editor button[action=waypoint-delete]`),
             distance: {
                 new: document.querySelector(`.container .editor .newwaypoint input`),
-                set: document.querySelector(`.container .editor .newwaypoint button[action=point-set-distance]`),
+                set: document.querySelector(`.container .editor .newwaypoint button[action=waypoint-set-distance]`),
                 sel: document.querySelector(`.container .editor .selwaypoint input`),
             }
         },
@@ -155,7 +160,7 @@ const selectRoute = async function(id, route) {
 
     dom.editor.routes.querySelector(`.item[id="${id}"]`).classList.add(`selected`);
     app.editor.selected_route = route ? route : await window.electronAPI.route.get(id);
-    dom.editor.waypoints.innerHTML = ``;
+    dom.editor.waypoints.list.innerHTML = ``;
 
     for (const waypoint of app.editor.selected_route.pacenote) {
         let item = document.createElement(`div`);
@@ -163,23 +168,26 @@ const selectRoute = async function(id, route) {
             item.setAttribute(`distance`, waypoint.distance);
             item.innerHTML = getWaypointHtml(waypoint.distance, waypoint.commands);
 
-        dom.editor.waypoints.append(item);
+        dom.editor.waypoints.list.append(item);
     };
 
     dom.editor.routes.classList.remove(`disabled`);
 };
 
 const selectWaypoint = function(distance) {
-    const exist_selected_item = dom.editor.waypoints.querySelector(`.item.selected`);
+    const exist_selected_item = dom.editor.waypoints.list.querySelector(`.item.selected`);
 
     if (exist_selected_item) {
         exist_selected_item.classList.remove(`selected`);
     };
 
-    const selected_item = dom.editor.waypoints.querySelector(`.item[distance="${distance}"]`);
+    const selected_item = dom.editor.waypoints.list.querySelector(`.item[distance="${distance}"]`);
 
     selected_item.classList.add(`selected`);
-    selected_item.scrollIntoView({ block: `center` });
+
+    if (app.config.waypoint_scroll_into_view) {
+        selected_item.scrollIntoView({ block: `center` });
+    };
 
     app.editor.selected_waypoint = app.editor.selected_route.pacenote.find(function(x) {
         return x.distance === parseInt(distance);
@@ -255,7 +263,7 @@ const resetSelectedRoute = function() {
     resetSelectedWaypoint();
 
     app.editor.selected_route = null;
-    dom.editor.waypoints.innerHTML = `<div class="plug">Выберите спецучасток</div>`;
+    dom.editor.waypoints.list.innerHTML = `<div class="plug">Выберите спецучасток</div>`;
 };
 
 const resetSelectedWaypoint = function() {
@@ -295,7 +303,7 @@ const sortWaypoints = function() {
 };
 
 const updateSelectedWaypoint = function(distance) {
-    let item = dom.editor.waypoints.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`);
+    let item = dom.editor.waypoints.list.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`);
 
     if (distance !== undefined) {
         const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
@@ -344,9 +352,9 @@ const appendWaypointElement = function(distance, item) {
     const prev_waypoint = app.editor.selected_route.pacenote[getWaypointIndex(distance) - 1];
 
     if (prev_waypoint) {
-        dom.editor.waypoints.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
+        dom.editor.waypoints.list.querySelector(`.item[distance="${prev_waypoint.distance}"]`).after(item);
     } else {
-        dom.editor.waypoints.prepend(item);
+        dom.editor.waypoints.list.prepend(item);
     };
 };
 
@@ -419,12 +427,17 @@ dom.editor.routes.addEventListener(`click`, async function(event) {
     await selectRoute(event.target.getAttribute(`id`));
 });
 
-dom.editor.waypoints.addEventListener(`click`, function(event) {
+dom.editor.waypoints.list.addEventListener(`click`, function(event) {
     if (!event.target.classList.contains(`item`)) {
         return false;
     };
 
     selectWaypoint(event.target.getAttribute(`distance`));
+});
+
+dom.editor.waypoints.options.scroll.addEventListener(`click`, function(event) {
+    app.config.waypoint_scroll_into_view = !app.config.waypoint_scroll_into_view;
+    event.target.classList.contains(`active`) ? event.target.classList.remove(`active`) : event.target.classList.add(`active`);
 });
 
 dom.editor.route.open.addEventListener(`click`, async function(event) {
@@ -479,7 +492,7 @@ dom.editor.waypoint.delete.addEventListener(`click`, async function() {
     };
 
     app.editor.selected_route.pacenote.splice(getWaypointIndex(app.editor.selected_waypoint.distance), 1);
-    dom.editor.waypoints.querySelector(`.list .item[distance="${app.editor.selected_waypoint.distance}"]`).remove();
+    dom.editor.waypoints.list.querySelector(`.list .item[distance="${app.editor.selected_waypoint.distance}"]`).remove();
 
     resetSelectedWaypoint();
 });

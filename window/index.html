@@ -62,7 +62,7 @@
                 <div class="block volume">
                     <div class="name">Громкость</div>
                     <div class="row">
-                        <button action="voice-listen" title="Прослушать озвучку">
+                        <button action="voice-listen" title="Прослушать озвучку.">
                             <img src="./assets/images/volume.svg">
                         </button>
                         <div class="range">
@@ -104,14 +104,21 @@
                         <div class="name">Новая путевая точка</div>
                         <div class="row">
                             <input type="number" value="0">
-                            <button class="location" action="point-set-distance" title="Вставить текущую дистанцию">
+                            <button class="location" action="waypoint-set-distance" title="Вставить текущую дистанцию. Нажатие на Space дублирует эту кнопку.">
                                 <img src="./assets/images/location.svg">
                             </button>
-                            <button action="point-create">Создать</button>
+                            <button action="waypoint-create" title="Нажатие на Enter дублирует эту кнопку.">Создать</button>
                         </div>
                     </div>
                     <div class="block waypoints flex">
-                        <div class="name">Путевые точки</div>
+                        <div class="name">
+                            <div class="text">Путевые точки</div>
+                            <div class="buttons">
+                                <button action="waypoints-scroll-into-view" title="Прокрутка списка до точки.">
+                                    <img src="./assets/images/bars.svg">
+                                </button>
+                            </div>
+                        </div>
                         <div class="list">
                             <div class="plug">Выберите спецучасток</div>
                         </div>
@@ -123,7 +130,7 @@
                         <div class="name">Выбранная путевая точка</div>
                         <div class="row">
                             <input type="number" value="0">
-                            <button action="point-delete">Удалить путевую точку</button>
+                            <button action="waypoint-delete">Удалить путевую точку</button>
                         </div>
                     </div>
                     <div class="row flex">
