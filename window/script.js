@@ -596,7 +596,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
             route_id: telemetry.route.id,
             playlist: [],
             briefing: false,
-            completed_distance: 0,
+            completed_distance: telemetry.stage.distance,
             completed_waypoints: [],
             vehicle: {
                 tyre_state: {
@@ -622,7 +622,6 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
             });
 
             if (briefpoint) {
-                app.current_stage.completed_waypoints.push(briefpoint.distance);
                 app.current_stage.playlist = app.current_stage.playlist.concat(briefpoint.commands);
             };
         };
@@ -631,7 +630,7 @@ window.electronAPI.onUpdateTelemetry(function(telemetry) {
     };
 
     const waypoints = pacenote.filter(function(waypoint) {
-        return !app.current_stage.completed_waypoints.includes(waypoint.distance) && waypoint.distance > app.current_stage.completed_distance && waypoint.distance < (app.current_stage.completed_distance + 2);
+        return waypoint.distance !== 0 && !app.current_stage.completed_waypoints.includes(waypoint.distance) && waypoint.distance > app.current_stage.completed_distance && waypoint.distance < (app.current_stage.completed_distance + 2);
     });
 
     if (waypoints.length > 0) {
