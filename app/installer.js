@@ -32,7 +32,7 @@ try {
 const app = async function() {
     await logger.log(`Проверка версии приложения.`);
 
-    const response_version = await fetch.send(`${globalThis.url.api}/app/version`).catch(async function() {
+    const response_version = await fetch.send(`${globalThis.url.api}/app/version`).catch(function() {
         return null;
     });
 
@@ -50,7 +50,7 @@ const app = async function() {
 
     await logger.log(`Текущая версия приложения не совпадает с актуальной. Обновление приложения.`);
 
-    const response_resources = await fetch.send(`${globalThis.url.cdn}/app.asar`).catch(async function() {
+    const response_resources = await fetch.send(`${globalThis.url.cdn}/app.asar`).catch(function() {
         return null;
     });
 

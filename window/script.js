@@ -186,7 +186,7 @@ const selectWaypoint = function(distance) {
     selected_item.classList.add(`selected`);
 
     if (app.config.waypoint_scroll_into_view) {
-        selected_item.scrollIntoView({ block: `center` });
+        selected_item.scrollIntoView({ block: `center`, behavior: `smooth` });
     };
 
     app.editor.selected_waypoint = app.editor.selected_route.pacenote.find(function(x) {
@@ -200,7 +200,6 @@ const selectWaypoint = function(distance) {
         addCommandElement(command);
     };
 };
-
 
 const selectVoice = async function(voice_id) {
     dom.settings.voice.disabled = true;
@@ -296,6 +295,30 @@ const getCommandIndex = function(command) {
     }); 
 };
 
+const addWaypoint = function(distance) {
+    const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
+        return x.distance === distance;
+    });
+
+    if (exist > -1) {
+        return false;
+    };
+
+    app.editor.selected_route.pacenote.push({
+        distance: distance,
+        commands: []
+    });
+
+    sortWaypoints();
+
+    let item = document.createElement(`div`);
+        item.classList.add(`item`);
+        item.setAttribute(`distance`, distance);
+        item.innerHTML = `${distance}м`;
+
+    appendWaypointElement(distance, item);
+};
+
 const sortWaypoints = function() {
     return app.editor.selected_route.pacenote.sort(function(a, b) {
         return a.distance - b.distance;
@@ -324,28 +347,15 @@ const updateSelectedWaypoint = function(distance) {
     item.innerHTML = getWaypointHtml(distance || app.editor.selected_waypoint.distance, app.editor.selected_waypoint.commands);
 };
 
-const addWaypoint = function(distance) {
-    const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
-        return x.distance === distance;
-    });
-
-    if (exist > -1) {
+const deleteSelectedWaypoint = function() {
+    if (!app.editor.selected_waypoint) {
         return false;
     };
 
-    app.editor.selected_route.pacenote.push({
-        distance: distance,
-        commands: []
-    });
+    app.editor.selected_route.pacenote.splice(getWaypointIndex(app.editor.selected_waypoint.distance), 1);
+    dom.editor.waypoints.list.querySelector(`.list .item[distance="${app.editor.selected_waypoint.distance}"]`).remove();
 
-    sortWaypoints();
-
-    let item = document.createElement(`div`);
-        item.classList.add(`item`);
-        item.setAttribute(`distance`, distance);
-        item.innerHTML = `${distance}м`;
-
-    appendWaypointElement(distance, item);
+    resetSelectedWaypoint();
 };
 
 const appendWaypointElement = function(distance, item) {
@@ -487,14 +497,7 @@ dom.editor.waypoint.create.addEventListener(`click`, async function() {
 });
 
 dom.editor.waypoint.delete.addEventListener(`click`, async function() {
-    if (!app.editor.selected_waypoint) {
-        return false;
-    };
-
-    app.editor.selected_route.pacenote.splice(getWaypointIndex(app.editor.selected_waypoint.distance), 1);
-    dom.editor.waypoints.list.querySelector(`.list .item[distance="${app.editor.selected_waypoint.distance}"]`).remove();
-
-    resetSelectedWaypoint();
+    deleteSelectedWaypoint();
 });
 
 dom.editor.waypoint.distance.sel.addEventListener(`input`, async function() {
@@ -578,6 +581,10 @@ document.addEventListener(`keydown`, function(event) {
 
     if (event.code === `Space`) {
         dom.editor.waypoint.distance.new.value = Math.round(app.current_stage.completed_distance);
+    };
+
+    if (event.code === `Delete`) {
+        deleteSelectedWaypoint();
     };
 });
 

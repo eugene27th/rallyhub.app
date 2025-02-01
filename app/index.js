@@ -211,8 +211,14 @@ app.whenReady().then(async function() {
         }
     });
 
+    globalThis.window.on(`closed`, async function() {
+        await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(async function(error) {
+            await logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
+        }).finally(app.quit);
+    });
+
     globalThis.window.webContents.on(`did-finish-load`, async function() {
-        if (await installer.app().catch(async function() { return false })) {
+        if (await installer.app().catch(function() { return false })) {
             app.relaunch();
             app.exit();
         };
@@ -295,10 +301,4 @@ app.on(`second-instance`, function() {
     };
 
     return globalThis.window.focus();
-});
-
-app.on(`window-all-closed`, async function() {
-    await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(async function(error) {
-        await logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
-    }).finally(app.quit);
 });
