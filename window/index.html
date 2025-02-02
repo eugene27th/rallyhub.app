@@ -41,7 +41,7 @@
             </div>
             <div class="settings">
                 <div class="block game">
-                    <div class="name">Игра</div>
+                    <div class="title">Игра</div>
                     <select>
                         <option disabled selected>Выберите игру</option>
                         <option value="wrc23">EA SPORTS WRC</option>
@@ -49,18 +49,18 @@
                     </select>
                 </div>
                 <div class="block voice">
-                    <div class="name">Озвучка</div>
+                    <div class="title">Озвучка</div>
                     <select></select>
                 </div>
                 <div class="block rate">
-                    <div class="name">Скорость воспроизведения</div>
+                    <div class="title">Скорость воспроизведения</div>
                     <div class="range">
                         <input type="range" min="100" max="150" step="1" value="100">
                         <div class="value">100%</div>
                     </div>
                 </div>
                 <div class="block volume">
-                    <div class="name">Громкость</div>
+                    <div class="title">Громкость</div>
                     <div class="row">
                         <button action="voice-listen" title="Прослушать озвучку.">
                             <img src="./assets/images/volume.svg">
@@ -79,13 +79,13 @@
             <div class="editor">
                 <div class="column">
                     <div class="block location mb">
-                        <div class="name">Локация</div>
+                        <div class="title">Локация</div>
                         <select>
                             <option disabled selected>Выберите игру</option>
                         </select>
                     </div>
                     <div class="block routes mb flex">
-                        <div class="name">Спецучастки</div>
+                        <div class="title">Спецучастки</div>
                         <div class="list">
                             <div class="plug">Выберите локацию</div>
                         </div>
@@ -101,7 +101,7 @@
                 <div class="divline v"></div>
                 <div class="column">
                     <div class="block newwaypoint mb">
-                        <div class="name">Новая путевая точка</div>
+                        <div class="title">Новая путевая точка</div>
                         <div class="row">
                             <input type="number" value="0">
                             <button class="location" action="waypoint-set-distance" title="Вставить текущую дистанцию. Нажатие на Space дублирует эту кнопку.">
@@ -111,7 +111,7 @@
                         </div>
                     </div>
                     <div class="block waypoints flex">
-                        <div class="name">
+                        <div class="title">
                             <div class="text">Путевые точки</div>
                             <div class="buttons">
                                 <button action="waypoints-scroll-into-view" title="Прокрутка списка до точки.">
@@ -127,7 +127,7 @@
                 <div class="divline v"></div>
                 <div class="column">
                     <div class="block selwaypoint mb">
-                        <div class="name">Выбранная путевая точка</div>
+                        <div class="title">Выбранная путевая точка</div>
                         <div class="row">
                             <input type="number" value="0">
                             <button action="waypoint-delete" title="Нажатие на Delete дублирует эту кнопку.">Удалить путевую точку</button>
@@ -135,13 +135,13 @@
                     </div>
                     <div class="row flex">
                         <div class="block selcommands mr flex">
-                            <div class="name">Выбранные команды</div>
+                            <div class="title">Выбранные команды</div>
                             <div class="list">
                                 <div class="plug">Выберите путевую точку</div>
                             </div>
                         </div>
                         <div class="block allcommands flex">
-                            <div class="name">Все команды</div>
+                            <div class="title">Все команды</div>
                             <div class="list"></div>
                         </div>
                     </div>

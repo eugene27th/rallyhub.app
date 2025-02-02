@@ -21,7 +21,7 @@ const dom = {
         waypoints: {
             list: document.querySelector(`.container .editor .waypoints .list`),
             options: {
-                scroll: document.querySelector(`.container .editor .waypoints .name .buttons button[action=waypoints-scroll-into-view]`)
+                scroll: document.querySelector(`.container .editor .waypoints .title .buttons button[action=waypoints-scroll-into-view]`)
             }
         },
         route: {
@@ -185,7 +185,7 @@ const selectWaypoint = function(distance) {
 
     selected_item.classList.add(`selected`);
 
-    if (app.config.waypoint_scroll_into_view) {
+    if (app.editor.waypoint_scroll_into_view) {
         selected_item.scrollIntoView({ block: `center`, behavior: `smooth` });
     };
 
@@ -296,6 +296,10 @@ const getCommandIndex = function(command) {
 };
 
 const addWaypoint = function(distance) {
+    if (!app.editor.selected_route?.pacenote) {
+        return false;
+    };
+
     const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
         return x.distance === distance;
     });
@@ -317,6 +321,7 @@ const addWaypoint = function(distance) {
         item.innerHTML = `${distance}м`;
 
     appendWaypointElement(distance, item);
+    selectWaypoint(distance);
 };
 
 const sortWaypoints = function() {
@@ -446,7 +451,7 @@ dom.editor.waypoints.list.addEventListener(`click`, function(event) {
 });
 
 dom.editor.waypoints.options.scroll.addEventListener(`click`, function(event) {
-    app.config.waypoint_scroll_into_view = !app.config.waypoint_scroll_into_view;
+    app.editor.waypoint_scroll_into_view = !app.editor.waypoint_scroll_into_view;
     event.target.classList.contains(`active`) ? event.target.classList.remove(`active`) : event.target.classList.add(`active`);
 });
 
@@ -493,7 +498,6 @@ dom.editor.route.suggest.addEventListener(`click`, async function(event) {
 
 dom.editor.waypoint.create.addEventListener(`click`, async function() {
     addWaypoint(parseInt(dom.editor.waypoint.distance.new.value));
-    selectWaypoint(dom.editor.waypoint.distance.new.value);
 });
 
 dom.editor.waypoint.delete.addEventListener(`click`, async function() {
@@ -576,7 +580,6 @@ dom.editor.commands.all.addEventListener(`click`, async function(event) {
 document.addEventListener(`keydown`, function(event) {
     if (event.code === `Enter`) {
         addWaypoint(parseInt(dom.editor.waypoint.distance.new.value));
-        selectWaypoint(dom.editor.waypoint.distance.new.value);
     };
 
     if (event.code === `Space`) {
@@ -727,6 +730,10 @@ window.electronAPI.onAppReady(async function() {
 
             app.audio.element.volume = app.config.volume / 100;
             app.audio.element.playbackRate = app.config.rate / 100;
+
+            if (app.current_stage.playlist.length > 5 && app.config.rate < 110) {
+                app.audio.element.playbackRate = 1.1;
+            };
 
             app.audio.element.play();
         };
