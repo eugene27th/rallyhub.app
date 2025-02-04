@@ -12,8 +12,8 @@
         "binary-parser": "^2.2.1"
     },
     "devDependencies": {
-        "electron": "^29.1.4",
-        "electron-builder": "^24.13.3"
+        "electron": "^34.0.2",
+        "electron-builder": "^25.1.8"
     },
     "build": {
         "appId": "27thsquad.rallyhub",

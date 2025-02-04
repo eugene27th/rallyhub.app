@@ -66,5 +66,10 @@ contextBridge.exposeInMainWorld(`electronAPI`, {
         return ipcRenderer.on(`ready`, function(_event) {
             return callback();
         });
+    },
+    onMajorUpdate: function(callback) {
+        return ipcRenderer.on(`major`, function(_event) {
+            return callback();
+        });
     }
 });

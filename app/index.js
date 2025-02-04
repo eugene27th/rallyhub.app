@@ -7,12 +7,8 @@ if (!app.requestSingleInstanceLock()) {
 
 // globalThis.path = app.getAppPath(); // start
 globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
-globalThis.config = require(`${globalThis.path}/config.json`);
-globalThis.url = { api: `https://api.${globalThis.config.domain || `rallyhub.ru`}`, cdn: `https://cdn.${globalThis.config.domain || `rallyhub.ru`}` };
-globalThis.routes = { id: {}, game: {} };
-globalThis.voices = {};
 
-const fs = require(`fs/promises`);
+const fs = require(`fs`);
 const socket = require(`dgram`).createSocket(`udp4`);
 
 const fetch = require(`./fetch`);
@@ -25,13 +21,17 @@ ipcMain.handle(`config:get`, function() {
     return globalThis.config;
 });
 
-ipcMain.handle(`config:set`, async function(event, config) {
+ipcMain.handle(`config:set`, function(event, config) {
     globalThis.config = config;
 });
 
 ipcMain.handle(`voice:get`, async function(event, voice_id) {
-    if (globalThis.voices[voice_id]) {
-        return globalThis.voices[voice_id];
+    const from_cache = globalThis.voices.find(function(element) {
+        return element.id === parseInt(voice_id);
+    });
+
+    if (from_cache) {
+        return from_cache;
     };
 
     const response = await fetch.send(`${globalThis.url.api}/voice/${voice_id}`).catch(function() {
@@ -39,11 +39,15 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
     });
 
     if (response?.status !== 200) {
-        await logger.log(`Ошибка при получении озвучки. Путь: "${globalThis.url.api}/voice/${voice_id}". Статус: ${response?.status}.`);
+        logger.log(`Ошибка при получении озвучки. Путь: "${globalThis.url.api}/voice/${voice_id}". Статус: ${response?.status}.`);
         return false;
     };
 
-    return globalThis.voices[voice_id] = await response.json();
+    const voice = await response.json();
+
+    globalThis.voices.push(voice);
+
+    return voice;
 });
 
 ipcMain.handle(`voices:get`, async function() {
@@ -52,7 +56,7 @@ ipcMain.handle(`voices:get`, async function() {
     });
 
     if (response?.status !== 200) {
-        await logger.log(`Ошибка при получении списка озвучек. Путь: "${globalThis.url.api}/voices". Статус: ${response?.status}.`);
+        logger.log(`Ошибка при получении списка озвучек. Путь: "${globalThis.url.api}/voices". Статус: ${response?.status}.`);
         return false;
     };
 
@@ -60,8 +64,12 @@ ipcMain.handle(`voices:get`, async function() {
 });
 
 ipcMain.handle(`route:get`, async function(event, route_id) {
-    if (globalThis.routes.id[route_id]) {
-        return globalThis.routes.id[route_id];
+    const from_cache = globalThis.routes.find(function(element) {
+        return element.id === parseInt(route_id);
+    });
+
+    if (from_cache) {
+        return from_cache;
     };
 
     const response = await fetch.send(`${globalThis.url.api}/route/${route_id}`).catch(function() {
@@ -69,11 +77,15 @@ ipcMain.handle(`route:get`, async function(event, route_id) {
     });
 
     if (response?.status !== 200) {
-        await logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/${route_id}". Статус: ${response?.status}.`);
+        logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/${route_id}". Статус: ${response?.status}.`);
         return false;
     };
 
-    return globalThis.routes.id[route_id] = await response.json();
+    const route = await response.json();
+
+    globalThis.routes.push(route);
+
+    return route;
 });
 
 ipcMain.handle(`route:open`, async function() {
@@ -93,20 +105,11 @@ ipcMain.handle(`route:open`, async function() {
         return null;
     };
 
-    const file = await fs.readFile(response.filePaths[0]).catch(async function(error) {
-        await logger.log(`Ошибка при открытии файла. Путь: "${response.filePaths[0]}". Код: ${error.code}.`);
-        return null;
-    });
-
-    if (!file) {
-        return null;
-    };
-
     try {
         // todo: проверять корректность схемы
-        return JSON.parse(file);
+        return JSON.parse(fs.readFileSync(response.filePaths[0]));
     } catch (error) {
-        await logger.log(`Ошибка при парсинге файла. Путь: "${response.filePaths[0]}".`);
+        logger.log(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
         return null;
     };
 });
@@ -129,10 +132,12 @@ ipcMain.handle(`route:save`, async function(event, route) {
         return false;
     };
 
-    await fs.writeFile(response.filePath, JSON.stringify(route, null, 4)).catch(async function(error) {
-        await logger.log(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}/config.json". Код: ${error.code}.`);
+    try {
+        fs.writeFileSync(response.filePath, JSON.stringify(route, null, 4));
+    } catch (error) {
+        logger.log(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}/config.json". Код: ${error.code}.`);
         return false;
-    });
+    };
 
     return true;
 });
@@ -149,7 +154,7 @@ ipcMain.handle(`route:suggest`, async function(event, data) {
     });
 
     if (response?.status !== 200) {
-        await logger.log(`Ошибка при отправлении спецучастка. Путь: "${globalThis.url.api}/route/suggest". Статус: ${response?.status}.`);
+        logger.log(`Ошибка при отправлении спецучастка. Путь: "${globalThis.url.api}/route/suggest". Статус: ${response?.status}.`);
         return false;
     };
 
@@ -162,7 +167,7 @@ ipcMain.handle(`routes:get`, async function() {
     });
 
     if (response?.status !== 200) {
-        await logger.log(`Ошибка при получении списка спецучастков. Путь: "${globalThis.url.api}/routes". Статус: ${response?.status}.`);
+        logger.log(`Ошибка при получении списка спецучастков. Путь: "${globalThis.url.api}/routes". Статус: ${response?.status}.`);
         return false;
     };
 
@@ -175,7 +180,7 @@ ipcMain.handle(`commands:get`, async function() {
     });
 
     if (response?.status !== 200) {
-        await logger.log(`Ошибка при получении списка треков. Путь: "${globalThis.url.api}/commands". Статус: ${response?.status}.`);
+        logger.log(`Ошибка при получении списка треков. Путь: "${globalThis.url.api}/commands". Статус: ${response?.status}.`);
         return false;
     };
 
@@ -183,19 +188,31 @@ ipcMain.handle(`commands:get`, async function() {
 });
 
 ipcMain.handle(`external:open`, async function(event, url) {
-    return shell.openExternal(url);
+    return await shell.openExternal(url);
 });
 
-ipcMain.handle(`window:close`, async function() {
+ipcMain.handle(`window:close`, function() {
     return globalThis.window.close();
 });
 
-ipcMain.handle(`window:minimize`, async function() {
+ipcMain.handle(`window:minimize`, function() {
     return globalThis.window.minimize();
 });
 
 
-app.whenReady().then(async function() {
+app.whenReady().then(function() {
+    if (!installer.config()) {
+        return app.exit();
+    };
+
+    globalThis.url = {
+        api: `https://api.${globalThis.config.domain || `rallyhub.ru`}`,
+        cdn: `https://cdn.${globalThis.config.domain || `rallyhub.ru`}`
+    };
+
+    globalThis.routes = [];
+    globalThis.voices = [];
+
     globalThis.window = new BrowserWindow({
         width: 1200,
         height: 800,
@@ -211,20 +228,31 @@ app.whenReady().then(async function() {
         }
     });
 
-    globalThis.window.on(`closed`, async function() {
-        await fs.writeFile(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4)).catch(async function(error) {
-            await logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
-        }).finally(app.quit);
+    globalThis.window.on(`closed`, function() {
+        try {
+            fs.writeFileSync(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4));
+        } catch (error) {
+            logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
+        };
+
+        app.quit();
     });
 
     globalThis.window.webContents.on(`did-finish-load`, async function() {
-        if (await installer.app().catch(function() { return false })) {
+        const status = await installer.resources();
+
+        if (status.restart) {
             app.relaunch();
-            app.exit();
+            return app.exit();
         };
 
-        await installer.wrc23();
-        await installer.drt20();
+        if (status.major) {
+            globalThis.window.webContents.send(`major`);
+            return false;
+        };
+
+        installer.wrc23();
+        installer.drt20();
 
         globalThis.window.webContents.send(`ready`);
 
@@ -255,7 +283,11 @@ app.whenReady().then(async function() {
                 return false;
             };
 
-            if (globalThis.routes.game[ingame_id] === undefined) {
+            let route = globalThis.routes.find(function(element) {
+                return element.ingame_id === ingame_id;
+            });
+
+            if (!route) {
                 globalThis.telemetry_awaiting = true;
 
                 const response = await fetch.send(`${globalThis.url.api}/route/game/${ingame_id}`).catch(function() {
@@ -263,24 +295,22 @@ app.whenReady().then(async function() {
                 });
 
                 if (response?.status !== 200) {
-                    await logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/game/${ingame_id}". Статус: ${response?.status}.`);
-                    return null;
+                    logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/game/${ingame_id}". Статус: ${response?.status}.`);
+                    return false;
                 };
 
-                globalThis.routes.game[ingame_id] = await response.json();
-                globalThis.telemetry_awaiting = false;
-            };
+                route = await response.json();
 
-            if (!globalThis.routes.game[ingame_id]) {
-                return false;
+                globalThis.routes.push(route);
+                globalThis.telemetry_awaiting = false;
             };
 
             globalThis.window.webContents.send(`telemetry`, {
                 route: {
-                    id: globalThis.routes.game[ingame_id].id,
-                    name: globalThis.routes.game[ingame_id].name,
-                    location: globalThis.routes.game[ingame_id].location,
-                    pacenote: globalThis.routes.game[ingame_id].pacenote
+                    id: route.id,
+                    name: route.name,
+                    location: route.location,
+                    pacenote: route.pacenote
                 },
                 ...telemetry
             });

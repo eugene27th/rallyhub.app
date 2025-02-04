@@ -4,9 +4,18 @@ const dom = {
         minimize: document.querySelector(`.header .menu .buttons button[action=window-minimize]`),
         close: document.querySelector(`.header .menu .buttons button[action=window-close]`)
     },
-    preloader: {
-        container: document.querySelector(`.container .preloader`),
-        link: document.querySelector(`.container .preloader .content .description .external.faq`)
+    screens: {
+        loading: {
+            container: document.querySelector(`.container .loading`),
+            link: document.querySelector(`.container .loading .content .bottom .external.faq`)
+        },
+        major: {
+            container: document.querySelector(`.container .major`),
+            link: {
+                faq: document.querySelector(`.container .major .content .bottom .external.faq`),
+                site: document.querySelector(`.container .major .content .message .external.site`)
+            }
+        }
     },
     settings: {
         game: document.querySelector(`.container .settings .block.game select`),
@@ -189,8 +198,8 @@ const selectWaypoint = function(distance) {
         selected_item.scrollIntoView({ block: `center`, behavior: `smooth` });
     };
 
-    app.editor.selected_waypoint = app.editor.selected_route.pacenote.find(function(x) {
-        return x.distance === parseInt(distance);
+    app.editor.selected_waypoint = app.editor.selected_route.pacenote.find(function(element) {
+        return element.distance === parseInt(distance);
     });
 
     dom.editor.commands.selected.innerHTML = ``;
@@ -277,21 +286,21 @@ const getWaypointHtml = function(distance, commands) {
     let text = ``;
 
     for (const command of commands) {
-        text += ` - ${(app.commands.find(function(x) { return x.key === command })).value}`;
+        text += ` - ${(app.commands.find(function(element) {return element.key === command })).value}`;
     };
 
     return `${distance}м <span>${text}</span>`;
 };
 
 const getWaypointIndex = function(distance) {
-    return app.editor.selected_route.pacenote.findIndex(function(x) {
-        return x.distance === distance;
+    return app.editor.selected_route.pacenote.findIndex(function(element) {
+        return element.distance === distance;
     });
 };
 
 const getCommandIndex = function(command) {
-    return app.editor.selected_waypoint.commands.findIndex(function(x) {
-        return x === command;
+    return app.editor.selected_waypoint.commands.findIndex(function(element) {
+        return element === command;
     }); 
 };
 
@@ -300,8 +309,8 @@ const addWaypoint = function(distance) {
         return false;
     };
 
-    const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
-        return x.distance === distance;
+    const exist = app.editor.selected_route.pacenote.findIndex(function(element) {
+        return element.distance === distance;
     });
 
     if (exist > -1) {
@@ -334,8 +343,8 @@ const updateSelectedWaypoint = function(distance) {
     let item = dom.editor.waypoints.list.querySelector(`.item[distance="${app.editor.selected_waypoint.distance}"]`);
 
     if (distance !== undefined) {
-        const exist = app.editor.selected_route.pacenote.findIndex(function(x) {
-            return x.distance === distance;
+        const exist = app.editor.selected_route.pacenote.findIndex(function(element) {
+            return element.distance === distance;
         });
 
         if (exist > -1) {
@@ -379,7 +388,7 @@ const addCommandElement = function(command) {
         item.setAttribute(`command`, command);
         item.setAttribute(`draggable`, true);
         item.innerHTML = `
-            ${app.commands.find(function(x) { return x.key === command }).value}
+            ${app.commands.find(function(element) { return element.key === command }).value}
             <img class="delete" src="./assets/images/xmark.svg">
         `;
 
@@ -396,8 +405,16 @@ dom.header.close.addEventListener(`click`, async function() {
 });
 
 
-dom.preloader.link.addEventListener(`click`, async function() {
+dom.screens.loading.link.addEventListener(`click`, async function() {
     await window.electronAPI.external.open(`https://rallyhub.ru/faq`);
+});
+
+dom.screens.major.link.faq.addEventListener(`click`, async function() {
+    await window.electronAPI.external.open(`https://rallyhub.ru/faq`);
+});
+
+dom.screens.major.link.site.addEventListener(`click`, async function() {
+    await window.electronAPI.external.open(`https://rallyhub.ru`);
 });
 
 
@@ -592,89 +609,17 @@ document.addEventListener(`keydown`, function(event) {
 });
 
 
-window.electronAPI.onUpdateTelemetry(function(telemetry) {
-    const header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}м`;
-
-    if (dom.header.status.innerText !== header) {
-        dom.header.status.innerText = header;
-    };
-
-    app.current_stage.completed_distance = telemetry.stage.distance;
-
-    if (app.current_stage.route_id !== telemetry.route.id || (app.current_stage.completed_distance <= 0 && app.current_stage.completed_waypoints.length > 1)) {
-        app.current_stage = {
-            route_id: telemetry.route.id,
-            playlist: [],
-            briefing: false,
-            completed_distance: telemetry.stage.distance,
-            completed_waypoints: [],
-            vehicle: {
-                tyre_state: {
-                    fl: 0,
-                    fr: 0,
-                    rl: 0,
-                    rr: 0
-                }
-            }
-        };
-    };
-
-    const pacenote = (app.editor.selected_route && app.editor.selected_route.id === telemetry.route.id) ? app.editor.selected_route.pacenote : telemetry.route.pacenote;
-
-    if (!pacenote) {
-        return false;
-    };
-
-    if (!app.current_stage.briefing) {
-        if (app.current_stage.completed_distance <= 0) {
-            const briefpoint = pacenote.find(function(briefpoint) {
-                return briefpoint.distance === 0;
-            });
-
-            if (briefpoint) {
-                app.current_stage.playlist = app.current_stage.playlist.concat(briefpoint.commands);
-            };
-        };
-
-        app.current_stage.briefing = true;
-    };
-
-    const waypoints = pacenote.filter(function(waypoint) {
-        return waypoint.distance !== 0 && !app.current_stage.completed_waypoints.includes(waypoint.distance) && waypoint.distance > app.current_stage.completed_distance && waypoint.distance < (app.current_stage.completed_distance + 2);
-    });
-
-    if (waypoints.length > 0) {
-        app.current_stage.completed_waypoints.push(waypoints[0].distance);
-        app.current_stage.playlist = app.current_stage.playlist.concat(waypoints[0].commands);
-    };
-
-    if (telemetry.vehicle?.tyre_state) {
-        for (let [tyre, state] of Object.entries(telemetry.vehicle.tyre_state)) {
-            if (app.current_stage.vehicle.tyre_state[tyre] !== state) {
-                if (state === 1 || (state === 2 && app.current_stage.vehicle.tyre_state[tyre] !== 1)) {
-                    app.current_stage.playlist.push(`puncture_${tyre}`);
-                };
-
-                app.current_stage.vehicle.tyre_state[tyre] = state;
-            };
-        };
-    };
+window.electronAPI.onMajorUpdate(async function() {
+    dom.screens.loading.container.remove();
 });
 
 window.electronAPI.onAppReady(async function() {
+    dom.screens.major.container.remove();
+
     app.config = await window.electronAPI.config.get();
     app.routes = await window.electronAPI.routes.get();
     app.voices = await window.electronAPI.voices.get();
     app.commands = await window.electronAPI.commands.get();
-
-    if (!app.config.voice) {
-        let option = document.createElement(`option`);
-            option.setAttribute(`disabled`, true);
-            option.setAttribute(`selected`, true);
-            option.innerText = `Выберите озвучку`;
-
-        dom.settings.voice.append(option);
-    };
 
     for (const voice of app.voices) {
         let option = document.createElement(`option`);
@@ -705,19 +650,11 @@ window.electronAPI.onAppReady(async function() {
         await selectGame(app.config.game);
     };
 
-    if (app.config.voice) {
-        await selectVoice(app.config.voice);
-    };
-
-    if (app.config.rate) {
-        await selectRate(app.config.rate);
-    };
+    await selectRate(app.config.rate);
+    await selectVoice(app.config.voice);
+    await selectVolume(app.config.volume);
     
-    if (app.config.volume) {
-        await selectVolume(app.config.volume);
-    };
-    
-    dom.preloader.container.remove();
+    dom.screens.loading.container.remove();
 
     setInterval(function() {
         if (app.current_stage.playlist.length < 1 || (app.audio.element.currentTime > 0 && !app.audio.element.ended)) {
@@ -740,4 +677,73 @@ window.electronAPI.onAppReady(async function() {
 
         app.current_stage.playlist.splice(0, 1);
     }, 50);
+
+    window.electronAPI.onUpdateTelemetry(function(telemetry) {
+        const header = `${telemetry.route.location} - ${telemetry.route.name} - ${Math.round(telemetry.stage.distance)}м`;
+    
+        if (dom.header.status.innerText !== header) {
+            dom.header.status.innerText = header;
+        };
+    
+        app.current_stage.completed_distance = telemetry.stage.distance;
+    
+        if (app.current_stage.route_id !== telemetry.route.id || (app.current_stage.completed_distance <= 0 && app.current_stage.completed_waypoints.length > 1)) {
+            app.current_stage = {
+                route_id: telemetry.route.id,
+                playlist: [],
+                briefing: false,
+                completed_distance: telemetry.stage.distance,
+                completed_waypoints: [],
+                vehicle: {
+                    tyre_state: {
+                        fl: 0,
+                        fr: 0,
+                        rl: 0,
+                        rr: 0
+                    }
+                }
+            };
+        };
+    
+        const pacenote = (app.editor.selected_route && app.editor.selected_route.id === telemetry.route.id) ? app.editor.selected_route.pacenote : telemetry.route.pacenote;
+    
+        if (!pacenote) {
+            return false;
+        };
+    
+        if (!app.current_stage.briefing) {
+            if (app.current_stage.completed_distance <= 0) {
+                const briefpoint = pacenote.find(function(element) {
+                    return element.distance === 0;
+                });
+    
+                if (briefpoint) {
+                    app.current_stage.playlist = app.current_stage.playlist.concat(briefpoint.commands);
+                };
+            };
+    
+            app.current_stage.briefing = true;
+        };
+    
+        const waypoints = pacenote.filter(function(waypoint) {
+            return waypoint.distance !== 0 && !app.current_stage.completed_waypoints.includes(waypoint.distance) && waypoint.distance > app.current_stage.completed_distance && waypoint.distance < (app.current_stage.completed_distance + 2);
+        });
+    
+        if (waypoints.length > 0) {
+            app.current_stage.completed_waypoints.push(waypoints[0].distance);
+            app.current_stage.playlist = app.current_stage.playlist.concat(waypoints[0].commands);
+        };
+    
+        if (telemetry.vehicle?.tyre_state) {
+            for (let [tyre, state] of Object.entries(telemetry.vehicle.tyre_state)) {
+                if (app.current_stage.vehicle.tyre_state[tyre] !== state) {
+                    if (state === 1 || (state === 2 && app.current_stage.vehicle.tyre_state[tyre] !== 1)) {
+                        app.current_stage.playlist.push(`puncture_${tyre}`);
+                    };
+    
+                    app.current_stage.vehicle.tyre_state[tyre] = state;
+                };
+            };
+        };
+    });
 });

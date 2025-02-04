@@ -14,9 +14,7 @@ const send = async function(url, options = {}, attemts = 5) {
 
             return await fetch(url, options);
         } catch (error) {
-            console.log(error)
-
-            await logger.log(`Ошибка при выполнении запроса. Путь: "${url}". Код: ${error.code}.`);
+            logger.log(`Ошибка при выполнении запроса. Путь: "${url}". Код: ${error.code}.`);
 
             if (a >= attemts) {
                 throw error;

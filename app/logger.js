@@ -1,7 +1,7 @@
-const fs = require(`fs/promises`);
+const fs = require(`fs`);
 
 
-const log = async function(message) {
+const log = function(message) {
     let date = new Date();
 
     const D = `${date.getUTCDate()}`.padStart(2, `0`);
@@ -15,25 +15,20 @@ const log = async function(message) {
     const path = `${globalThis.path}/app.log`;
     const row = `[${D}.${M}.${Y} ${h}:${m}:${s}Z] ${message}\n`;
 
-    const file = await fs.readFile(path, { encoding: `utf8` }).catch(function() {
-        return null;
-    });
-
-    if (file) {
+    try {
+        let file = fs.readFileSync(path, { encoding: `utf8` });
         let rows = file.split(`\n`).slice(0, -1);
 
         if (rows.length > 1000) {
-            rows.push(row);
-
-            return await fs.writeFile(path, rows.slice(50).join(`\n`)).catch(function(error) {
-                return false;
-            });
+            rows.push(row); return fs.writeFileSync(path, rows.slice(50).join(`\n`));
+        };
+    } finally {
+        try {
+            return fs.appendFileSync(path, row);
+        } catch (error) {
+            return false;
         };
     };
-
-    return await fs.appendFile(path, row).catch(function(error) {
-        return false;
-    });
 };
 
 
