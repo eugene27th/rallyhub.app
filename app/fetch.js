@@ -1,23 +1,34 @@
 const logger = require(`./logger`);
 
 
-const send = async function(url, options = {}, attemts = 5) {
-    for (let a = 1; a <= attemts; a++) {
+const send = async function(url, options, parse = `json`) {
+    for (let a = 1; a <= 5; a++) {
         try {
-            if (options.headers) {
-                options.headers[`app-version`] = globalThis.config.version;
-            } else {
-                options.headers = {
-                    [`app-version`]: globalThis.config.version
-                };
+            const response = await fetch(url, options);
+
+            if (!response.ok) {
+                logger.log(`Ошибка при выполнении запроса. Путь: "${url}". Статус: ${response.status}.`);
+                return false;
             };
 
-            return await fetch(url, options);
-        } catch (error) {
-            logger.log(`Ошибка при выполнении запроса. Путь: "${url}". Код: ${error.code}.`);
+            if (parse === `json`) {
+                return await response.json();
+            };
 
-            if (a >= attemts) {
-                throw error;
+            if (parse === `text`) {
+                return await response.text();
+            };
+
+            if (parse === `buffer`) {
+                return await response.arrayBuffer();
+            };
+
+            return true;
+        } catch (error) {
+            logger.log(`Ошибка при выполнении запроса. Путь: "${url}". Ошибка: ${error.name}: ${error.message}.${error.cause?.code ? ` Код: ${error.cause.code}.` : ``}`);
+
+            if (a >= 5) {
+                return false;
             };
         };
     };

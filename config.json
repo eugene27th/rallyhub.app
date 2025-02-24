@@ -1,8 +1,7 @@
 {
-    "version": "1.0.4",
+    "version": "1.0.5",
     "port": 20220,
     "voice": 1,
     "rate": 100,
-    "volume": 100,
-    "game": "wrc23"
+    "volume": 50
 }

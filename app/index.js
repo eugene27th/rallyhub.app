@@ -34,33 +34,17 @@ ipcMain.handle(`voice:get`, async function(event, voice_id) {
         return from_cache;
     };
 
-    const response = await fetch.send(`${globalThis.url.api}/voice/${voice_id}`).catch(function() {
-        return null;
-    });
+    const voice = await fetch.send(`${globalThis.url.api}/voice/${voice_id}`);
 
-    if (response?.status !== 200) {
-        logger.log(`Ошибка при получении озвучки. Путь: "${globalThis.url.api}/voice/${voice_id}". Статус: ${response?.status}.`);
-        return false;
+    if (voice) {
+        globalThis.voices.push(voice);
     };
-
-    const voice = await response.json();
-
-    globalThis.voices.push(voice);
 
     return voice;
 });
 
 ipcMain.handle(`voices:get`, async function() {
-    const response = await fetch.send(`${globalThis.url.api}/voices`).catch(function() {
-        return null;
-    });
-
-    if (response?.status !== 200) {
-        logger.log(`Ошибка при получении списка озвучек. Путь: "${globalThis.url.api}/voices". Статус: ${response?.status}.`);
-        return false;
-    };
-
-    return await response.json();
+    return await fetch.send(`${globalThis.url.api}/voices`);
 });
 
 ipcMain.handle(`route:get`, async function(event, route_id) {
@@ -72,18 +56,11 @@ ipcMain.handle(`route:get`, async function(event, route_id) {
         return from_cache;
     };
 
-    const response = await fetch.send(`${globalThis.url.api}/route/${route_id}`).catch(function() {
-        return null;
-    });
+    const route = await fetch.send(`${globalThis.url.api}/route/${route_id}`);
 
-    if (response?.status !== 200) {
-        logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/${route_id}". Статус: ${response?.status}.`);
-        return false;
+    if (route) {
+        globalThis.routes.push(route);
     };
-
-    const route = await response.json();
-
-    globalThis.routes.push(route);
 
     return route;
 });
@@ -143,48 +120,21 @@ ipcMain.handle(`route:save`, async function(event, route) {
 });
 
 ipcMain.handle(`route:suggest`, async function(event, data) {
-    const response = await fetch.send(`${globalThis.url.api}/route/suggest`, {
+    return await fetch.send(`${globalThis.url.api}/route/suggest`, {
         method: `POST`,
         headers: {
             [`Content-Type`]: `application/json`
         },
         body: JSON.stringify(data)
-    }).catch(function() {
-        return null;
-    });
-
-    if (response?.status !== 200) {
-        logger.log(`Ошибка при отправлении спецучастка. Путь: "${globalThis.url.api}/route/suggest". Статус: ${response?.status}.`);
-        return false;
-    };
-
-    return true;
+    }, false);
 });
 
 ipcMain.handle(`routes:get`, async function() {
-    const response = await fetch.send(`${globalThis.url.api}/routes`).catch(function() {
-        return null;
-    });
-
-    if (response?.status !== 200) {
-        logger.log(`Ошибка при получении списка спецучастков. Путь: "${globalThis.url.api}/routes". Статус: ${response?.status}.`);
-        return false;
-    };
-
-    return await response.json();
+    return await fetch.send(`${globalThis.url.api}/routes`);
 });
 
 ipcMain.handle(`commands:get`, async function() {
-    const response = await fetch.send(`${globalThis.url.api}/commands`).catch(function() {
-        return null;
-    });
-
-    if (response?.status !== 200) {
-        logger.log(`Ошибка при получении списка треков. Путь: "${globalThis.url.api}/commands". Статус: ${response?.status}.`);
-        return false;
-    };
-
-    return await response.json();
+    return await fetch.send(`${globalThis.url.api}/commands`);
 });
 
 ipcMain.handle(`external:open`, async function(event, url) {
@@ -290,16 +240,15 @@ app.whenReady().then(function() {
             if (!route) {
                 globalThis.telemetry_awaiting = true;
 
-                const response = await fetch.send(`${globalThis.url.api}/route/game/${ingame_id}`).catch(function() {
-                    return null;
-                });
+                route = await fetch.send(`${globalThis.url.api}/route/game/${ingame_id}`);
 
-                if (response?.status !== 200) {
-                    logger.log(`Ошибка при получении спецучастка. Путь: "${globalThis.url.api}/route/game/${ingame_id}". Статус: ${response?.status}.`);
+                if (!route) {
+                    setTimeout(function() {
+                        globalThis.telemetry_awaiting = false;
+                    }, 5000);
+
                     return false;
                 };
-
-                route = await response.json();
 
                 globalThis.routes.push(route);
                 globalThis.telemetry_awaiting = false;

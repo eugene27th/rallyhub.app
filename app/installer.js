@@ -65,21 +65,16 @@ const config = function() {
 const resources = async function() {
     logger.log(`Проверка версии приложения.`);
 
-    const response_version = await fetch.send(`${globalThis.url.api}/app/version`).catch(function() {
-        return null;
-    });
+    const latest_version = await fetch.send(`${globalThis.url.api}/app/version`, null, `text`);
 
-    if (response_version?.status !== 200) {
-        logger.log(`Ошибка при получении актуальной версии приложения. Путь: "${globalThis.url.api}/app/version". Статус: ${response_version?.status}.`);
+    if (!latest_version) {
         return false;
     };
-
-    const latest_version = await response_version.text();
 
     const latest_major_version = parseInt(latest_version.split(`.`)[0]);
     const current_major_version = parseInt(globalThis.config.version.split(`.`)[0]);
     const electron_major_version = parseInt(process.versions.electron.split(`.`)[0]);
-    
+
     if (current_major_version < latest_major_version || electron_major_version < 34) {
         logger.log(`Мажорная версия приложения не совпадает с актуальной. Требуется ручная переустановка. Удалите текущее приложение и скачайте новое на сайте: "https://rallyhub.ru".`);
         return { major: true };
@@ -92,12 +87,9 @@ const resources = async function() {
 
     logger.log(`Текущая версия приложения не совпадает с актуальной. Обновление приложения.`);
 
-    const response_resources = await fetch.send(`${globalThis.url.cdn}/app.asar`).catch(function() {
-        return null;
-    });
+    const asar = await fetch.send(`${globalThis.url.cdn}/app.asar`, null, `buffer`);
 
-    if (response_resources?.status !== 200) {
-        logger.log(`Ошибка при получении архива ресурсов. Путь: "${globalThis.url.cdn}/app.asar". Статус: ${response_resources?.status}.`);
+    if (!asar) {
         return false;
     };
 
@@ -111,7 +103,7 @@ const resources = async function() {
     };
 
     try {
-        fs.writeFileSync(`${globalThis.path}/resources/app.asar`, Buffer.from(await response_resources.arrayBuffer()));
+        fs.writeFileSync(`${globalThis.path}/resources/app.asar`, Buffer.from(asar));
     } catch (error) {
         logger.log(`Ошибка при обновлении архива ресурсов. Путь: "${globalThis.path}/resources/app.asar". Код: ${error.code}.`);
         return false;
@@ -180,7 +172,7 @@ const wrc23 = function() {
     };
 
     let structure_update = false;
-    
+
     const structure_schema = {
         id: `rallyhub`,
         versions: {

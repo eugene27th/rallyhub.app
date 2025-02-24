@@ -11,42 +11,42 @@ contextBridge.exposeInMainWorld(`electronAPI`, {
         }
     },
     voice: {
-        get: function(voice_id) {
-            return ipcRenderer.invoke(`voice:get`, voice_id);
+        get: async function(voice_id) {
+            return await ipcRenderer.invoke(`voice:get`, voice_id);
         }
     },
     voices: {
-        get: function() {
-            return ipcRenderer.invoke(`voices:get`);
+        get: async function() {
+            return await ipcRenderer.invoke(`voices:get`);
         }
     },
     route: {
-        get: function(route_id) {
-            return ipcRenderer.invoke(`route:get`, route_id);
+        get: async function(route_id) {
+            return await ipcRenderer.invoke(`route:get`, route_id);
         },
-        open: function() {
-            return ipcRenderer.invoke(`route:open`);
+        open: async function() {
+            return await ipcRenderer.invoke(`route:open`);
         },
-        save: function(route) {
-            return ipcRenderer.invoke(`route:save`, route);
+        save: async function(route) {
+            return await ipcRenderer.invoke(`route:save`, route);
         },
-        suggest: function(data) {
-            return ipcRenderer.invoke(`route:suggest`, data);
+        suggest: async function(data) {
+            return await ipcRenderer.invoke(`route:suggest`, data);
         }
     },
     routes: {
-        get: function() {
-            return ipcRenderer.invoke(`routes:get`);
+        get: async function() {
+            return await ipcRenderer.invoke(`routes:get`);
         }
     },
     commands: {
-        get: function() {
-            return ipcRenderer.invoke(`commands:get`);
+        get: async function() {
+            return await ipcRenderer.invoke(`commands:get`);
         }
     },
     external: {
-        open: function(url) {
-            return ipcRenderer.invoke(`external:open`, url);
+        open: async function(url) {
+            return await ipcRenderer.invoke(`external:open`, url);
         }
     },
     window: {

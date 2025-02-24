@@ -1,19 +1,21 @@
 const dom = {
     header: {
+        version: document.querySelector(`.header .draggable .logo .version`),
         status: document.querySelector(`.header .draggable .status`),
         minimize: document.querySelector(`.header .menu .buttons button[action=window-minimize]`),
         close: document.querySelector(`.header .menu .buttons button[action=window-close]`)
     },
     screens: {
         loading: {
-            container: document.querySelector(`.container .loading`),
-            link: document.querySelector(`.container .loading .content .bottom .external.faq`)
+            container: document.querySelector(`.container .screen.loading`),
+            message: document.querySelector(`.container .screen.loading .center .message`),
+            link: document.querySelector(`.container .screen.loading .bottom .external.faq`)
         },
         major: {
-            container: document.querySelector(`.container .major`),
+            container: document.querySelector(`.container .screen.major`),
             link: {
-                faq: document.querySelector(`.container .major .content .bottom .external.faq`),
-                site: document.querySelector(`.container .major .content .message .external.site`)
+                faq: document.querySelector(`.container .screen.major .bottom .external.faq`),
+                site: document.querySelector(`.container .screen.major .center .message .external.site`)
             }
         }
     },
@@ -171,6 +173,10 @@ const selectRoute = async function(id, route) {
     app.editor.selected_route = route ? route : await window.electronAPI.route.get(id);
     dom.editor.waypoints.list.innerHTML = ``;
 
+    if (!app.editor.selected_route) {
+        return false;
+    };
+
     for (const waypoint of app.editor.selected_route.pacenote) {
         let item = document.createElement(`div`);
             item.classList.add(`item`);
@@ -226,6 +232,11 @@ const selectVoice = async function(voice_id) {
     dom.settings.voice.value = voice_id;
     
     app.audio.selected_voice = await window.electronAPI.voice.get(voice_id);
+
+    if (!app.audio.selected_voice) {
+        return false;
+    };
+
     app.audio.element.setAttribute(`src`, `data:audio/webm;base64,${app.audio.selected_voice.tracks[`100`]}`);
 
     dom.settings.voice.disabled = false;
@@ -620,6 +631,13 @@ window.electronAPI.onAppReady(async function() {
     app.routes = await window.electronAPI.routes.get();
     app.voices = await window.electronAPI.voices.get();
     app.commands = await window.electronAPI.commands.get();
+
+    dom.header.version.innerText = `v${app.config.version}`;
+
+    if (!app.routes || !app.voices || !app.commands) {
+        dom.screens.loading.message.innerText = `Нет соединения с сервером.`;
+        return false;
+    };
 
     for (const voice of app.voices) {
         let option = document.createElement(`option`);
