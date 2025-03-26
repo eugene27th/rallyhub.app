@@ -243,15 +243,18 @@ app.whenReady().then(function() {
                 route = await fetch.send(`${globalThis.url.api}/route/game/${ingame_id}`);
 
                 if (!route) {
-                    setTimeout(function() {
-                        globalThis.telemetry_awaiting = false;
-                    }, 5000);
-
-                    return false;
+                    route = {
+                        ingame_id: ingame_id,
+                        pacenote: null
+                    };
                 };
 
                 globalThis.routes.push(route);
                 globalThis.telemetry_awaiting = false;
+            };
+
+            if (!route.pacenote) {
+                return false;
             };
 
             globalThis.window.webContents.send(`telemetry`, {

@@ -632,7 +632,7 @@ window.electronAPI.onAppReady(async function() {
     app.voices = await window.electronAPI.voices.get();
     app.commands = await window.electronAPI.commands.get();
 
-    dom.header.version.innerText = `v${app.config.version}`;
+    dom.header.version.innerText = `${app.config.version}`;
 
     if (!app.routes || !app.voices || !app.commands) {
         dom.screens.loading.message.innerText = `Нет соединения с сервером.`;
