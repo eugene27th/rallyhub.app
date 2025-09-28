@@ -431,6 +431,13 @@ input {
 
             &:nth-child(5) {
                 width: 460px;
+
+                .allcommands {
+                    input {
+                        width: 100%;
+                        margin-bottom: 5px;
+                    }
+                }
             }
         }
 

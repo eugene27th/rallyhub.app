@@ -50,7 +50,10 @@ const dom = {
             }
         },
         commands: {
-            all: document.querySelector(`.container .editor .allcommands .list`),
+            all: {
+                list: document.querySelector(`.container .editor .allcommands .list`),
+                search: document.querySelector(`.container .editor .allcommands input`)
+            },
             selected: document.querySelector(`.container .editor .selcommands .list`)
         }
     }
@@ -524,15 +527,15 @@ dom.editor.route.suggest.addEventListener(`click`, async function(event) {
     }, 2000);
 });
 
-dom.editor.waypoint.create.addEventListener(`click`, async function() {
+dom.editor.waypoint.create.addEventListener(`click`, function() {
     addWaypoint(parseInt(dom.editor.waypoint.distance.new.value));
 });
 
-dom.editor.waypoint.delete.addEventListener(`click`, async function() {
+dom.editor.waypoint.delete.addEventListener(`click`, function() {
     deleteSelectedWaypoint();
 });
 
-dom.editor.waypoint.distance.sel.addEventListener(`input`, async function() {
+dom.editor.waypoint.distance.sel.addEventListener(`input`, function() {
     if (this.value.length < 1) {
         return false;
     };
@@ -540,7 +543,7 @@ dom.editor.waypoint.distance.sel.addEventListener(`input`, async function() {
     updateSelectedWaypoint(parseInt(this.value));
 });
 
-dom.editor.waypoint.distance.set.addEventListener(`click`, async function() {
+dom.editor.waypoint.distance.set.addEventListener(`click`, function() {
     dom.editor.waypoint.distance.new.value = Math.round(app.current_stage.completed_distance);
 });
 
@@ -591,9 +594,9 @@ dom.editor.commands.selected.addEventListener(`click`, function(event) {
     updateSelectedWaypoint();
 });
 
-dom.editor.commands.all.addEventListener(`click`, async function(event) {
+dom.editor.commands.all.list.addEventListener(`click`, function(event) {
     if (!event.target.classList.contains(`item`) || !app.editor.selected_waypoint) {
-        return false;
+        return;
     };
 
     const command = event.target.getAttribute(`command`);
@@ -602,6 +605,23 @@ dom.editor.commands.all.addEventListener(`click`, async function(event) {
 
     addCommandElement(command);
     updateSelectedWaypoint();
+});
+
+dom.editor.commands.all.search.addEventListener(`input`, function() {
+    const items = dom.editor.commands.all.list.querySelectorAll(`.item`);
+    const value = this.value.trim().toLowerCase();
+
+    if (value.length < 1) {
+        for (const item of items) {
+            item.style.display = `flex`;
+        };
+
+        return;
+    };
+
+    for (const item of items) {
+        item.style.display = item.innerText.toLowerCase().includes(value) ? `flex` : `none`;
+    };
 });
 
 
@@ -661,7 +681,7 @@ window.electronAPI.onAppReady(async function() {
             item.setAttribute(`command`, command.key);
             item.innerText = command.value;
 
-        dom.editor.commands.all.append(item);
+        dom.editor.commands.all.list.append(item);
     };
 
     if (app.config.game) {
