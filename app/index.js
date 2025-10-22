@@ -1,72 +1,81 @@
-const { shell } = require(`electron`);
 const { app, BrowserWindow, ipcMain, dialog } = require(`electron/main`);
 
 if (!app.requestSingleInstanceLock()) {
     return app.quit();
 };
 
-// globalThis.path = app.getAppPath(); // start
-globalThis.path = process.resourcesPath.slice(0, process.resourcesPath.length - 10); // pack
-
 const fs = require(`fs`);
+const path = require(`path`);
 const socket = require(`dgram`).createSocket(`udp4`);
 
-const fetch = require(`./fetch`);
-const logger = require(`./logger`);
-const parser = require(`./parser`);
-const installer = require(`./installer`);
+const { shell } = require(`electron`);
+
+globalThis.app = {
+    path: {
+        root: app.isPackaged ? path.dirname(process.resourcesPath) : app.getAppPath(),
+        resources: app.getAppPath()
+    },
+    cache: {
+        routes: []
+    },
+    telemetry: {
+        await: false,
+        route: {}
+    }
+};
+
+globalThis.app.path.log = path.join(globalThis.app.path.root, `app.log`);
+globalThis.app.path.config = path.join(globalThis.app.path.root, `config.json`);
+globalThis.app.path.asar = path.join(globalThis.app.path.root, `resources`, `app.asar`);
+
+const common = require(`./common`);
+
+globalThis.app.config = common.getConfig();
+globalThis.app.path.documents = common.getDocumentPath();
+
+globalThis.app.url = {
+    // api: `https://api.${globalThis.app.config.domain}`,
+    api: `http://127.0.0.1:30001`,
+    cdn: `https://cdn.${globalThis.app.config.domain}`
+};
+
+const parse = require(`./parse`);
+const install = require(`./install`);
 
 
-ipcMain.handle(`config:get`, function() {
-    return globalThis.config;
+ipcMain.handle(`setConfig`, function(event, config) {
+    globalThis.app.config = config;
 });
 
-ipcMain.handle(`config:set`, function(event, config) {
-    globalThis.config = config;
+ipcMain.handle(`getInitData`, async function() {
+    return {
+        config: globalThis.app.config,
+        routes: await common.getRoutes(),
+        voices: await common.getVoices(),
+        commands: await common.getCommands()
+    };
 });
 
-ipcMain.handle(`voice:get`, async function(event, voice_id) {
-    const from_cache = globalThis.voices.find(function(element) {
-        return element.id === parseInt(voice_id);
+ipcMain.handle(`getRoute`, async function(event, id) {
+    const routeFromCache = globalThis.app.cache.routes.find(function(element) {
+        return element.id === id;
     });
 
-    if (from_cache) {
-        return from_cache;
+    if (routeFromCache) {
+        return routeFromCache;
     };
 
-    const voice = await fetch.send(`${globalThis.url.api}/voice/${voice_id}`);
-
-    if (voice) {
-        globalThis.voices.push(voice);
-    };
-
-    return voice;
-});
-
-ipcMain.handle(`voices:get`, async function() {
-    return await fetch.send(`${globalThis.url.api}/voices`);
-});
-
-ipcMain.handle(`route:get`, async function(event, route_id) {
-    const from_cache = globalThis.routes.find(function(element) {
-        return element.id === parseInt(route_id);
-    });
-
-    if (from_cache) {
-        return from_cache;
-    };
-
-    const route = await fetch.send(`${globalThis.url.api}/route/${route_id}`);
+    const route = await common.getRouteById(id);
 
     if (route) {
-        globalThis.routes.push(route);
+        globalThis.app.cache.routes.push(route);
     };
 
     return route;
 });
 
-ipcMain.handle(`route:open`, async function() {
-    const response = await dialog.showOpenDialog(globalThis.window, {
+ipcMain.handle(`openRoute`, async function() {
+    const response = await dialog.showOpenDialog(globalThis.app.window, {
         properties: ['openFile'],
         filters: [
             {
@@ -83,17 +92,16 @@ ipcMain.handle(`route:open`, async function() {
     };
 
     try {
-        // todo: проверять корректность схемы
         return JSON.parse(fs.readFileSync(response.filePaths[0]));
     } catch (error) {
-        logger.log(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
+        common.writeLog(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
         return null;
     };
 });
 
-ipcMain.handle(`route:save`, async function(event, route) {
-    const response = await dialog.showSaveDialog(globalThis.window, {
-        defaultPath: `${route.location} - ${route.name}.json`,
+ipcMain.handle(`saveRoute`, async function(event, data) {
+    const response = await dialog.showSaveDialog(globalThis.app.window, {
+        defaultPath: `${data.location} - ${data.name}.json`,
         properties: ['openFile'],
         filters: [
             {
@@ -110,177 +118,146 @@ ipcMain.handle(`route:save`, async function(event, route) {
     };
 
     try {
-        fs.writeFileSync(response.filePath, JSON.stringify(route, null, 4));
+        fs.writeFileSync(response.filePath, JSON.stringify(data, null, 4));
     } catch (error) {
-        logger.log(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}/config.json". Код: ${error.code}.`);
+        common.writeLog(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}". Код: ${error.code}.`);
         return false;
     };
 
     return true;
 });
 
-ipcMain.handle(`route:suggest`, async function(event, data) {
-    return await fetch.send(`${globalThis.url.api}/route/suggest`, {
-        method: `POST`,
-        headers: {
-            [`Content-Type`]: `application/json`
-        },
-        body: JSON.stringify(data)
-    }, false);
+ipcMain.handle(`sendRoute`, async function(event, data) {
+    return await common.suggestRoute(data);
 });
 
-ipcMain.handle(`routes:get`, async function() {
-    return await fetch.send(`${globalThis.url.api}/routes`);
-});
-
-ipcMain.handle(`commands:get`, async function() {
-    return await fetch.send(`${globalThis.url.api}/commands`);
-});
-
-ipcMain.handle(`external:open`, async function(event, url) {
+ipcMain.handle(`openExternal`, async function(event, url) {
     return await shell.openExternal(url);
 });
 
-ipcMain.handle(`window:close`, function() {
-    return globalThis.window.close();
+ipcMain.handle(`minimizeWindow`, function() {
+    return globalThis.app.window.minimize();
 });
 
-ipcMain.handle(`window:minimize`, function() {
-    return globalThis.window.minimize();
+ipcMain.handle(`closeWindow`, function() {
+    return globalThis.app.window.close();
 });
 
 
-app.whenReady().then(function() {
-    if (!installer.config()) {
-        return app.exit();
-    };
-
-    globalThis.url = {
-        api: `https://api.${globalThis.config.domain || `rallyhub.ru`}`,
-        cdn: `https://cdn.${globalThis.config.domain || `rallyhub.ru`}`
-    };
-
-    globalThis.routes = [];
-    globalThis.voices = [];
-
-    globalThis.window = new BrowserWindow({
+app.whenReady().then(async function() {
+    globalThis.app.window = new BrowserWindow({
         width: 1200,
         height: 800,
         resizable: false,
         useContentSize: true,
         titleBarStyle: `hidden`,
-        icon: `${app.getAppPath()}/icon.png`,
+        icon: `${globalThis.app.path.resources}/icon.png`,
         backgroundColor: `#2B2D31`,
         webPreferences: {
             nodeIntegration: true,
             backgroundThrottling: false,
-            preload: `${app.getAppPath()}/window/preload.js`
+            preload: `${globalThis.app.path.resources}/window/preload.js`
         }
     });
 
-    globalThis.window.on(`closed`, function() {
+    globalThis.app.window.on(`closed`, function() {
         try {
-            fs.writeFileSync(`${globalThis.path}/config.json`, JSON.stringify(globalThis.config, null, 4));
+            fs.writeFileSync(globalThis.app.path.config, JSON.stringify(globalThis.app.config, null, 4));
         } catch (error) {
-            logger.log(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.path}/config.json". Код: ${error.code}.`);
+            common.writeLog(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
         };
 
         app.quit();
     });
 
-    globalThis.window.webContents.on(`did-finish-load`, async function() {
-        const status = await installer.resources();
+    // globalThis.app.window.webContents.openDevTools({ activate: false }); // debug
+    globalThis.app.window.loadFile(`./window/index.html`);
 
-        if (status.restart) {
-            app.relaunch();
-            return app.exit();
-        };
+    globalThis.app.window.webContents.on(`did-finish-load`, async function() {
+        const updateStatus = await install.resources();
 
-        if (status.major) {
-            globalThis.window.webContents.send(`major`);
+        if (updateStatus.code) {
+            console.log(updateStatus);
+
+            if (updateStatus.code === `restartRequired`) {
+                app.relaunch();
+                return app.exit();
+            };
+
+            globalThis.app.window.webContents.send(`updateStatus`, updateStatus.code);
+
             return false;
         };
 
-        installer.wrc23();
-        installer.drt20();
+        install.wrc23();
+        install.drt20();
+        install.acr25();
 
-        globalThis.window.webContents.send(`ready`);
+        globalThis.app.window.webContents.send(`updateStatus`, `appReady`);
 
         socket.on(`message`, async function(message) {
-            if (globalThis.telemetry_awaiting) {
+            if (!globalThis.app.config.game || globalThis.app.telemetry.await) {
                 return false;
             };
 
-            if (!globalThis.config.game) {
-                return false;
-            };
-
-            const telemetry = parser[globalThis.config.game](message);
+            const telemetry = parse[globalThis.app.config.game](message);
 
             if (!telemetry) {
                 return false;
             };
 
-            let ingame_id;
+            if (globalThis.app.telemetry.route.game?.id !== telemetry.stage.id || globalThis.app.telemetry.route.game?.code !== globalThis.app.config.game) {
+                globalThis.app.telemetry.await = true;
 
-            if (globalThis.config.game === `wrc23`) {
-                ingame_id = telemetry.stage.id;
-            } else if (globalThis.config.game === `drt20`) {
-                ingame_id = parseInt(telemetry.stage.length * 100000);
-            };
+                const routeFromCache = globalThis.app.cache.routes.find(function(element) {
+                    return element.game.id === telemetry.stage.id && element.game.code === globalThis.app.config.game;
+                });
 
-            if (!ingame_id) {
-                return false;
-            };
+                if (routeFromCache) {
+                    globalThis.app.telemetry.route = routeFromCache;
+                } else {
+                    const route = await common.getRouteByGameId(globalThis.app.config.game, telemetry.stage.id);
 
-            let route = globalThis.routes.find(function(element) {
-                return element.ingame_id === ingame_id;
-            });
-
-            if (!route) {
-                globalThis.telemetry_awaiting = true;
-
-                route = await fetch.send(`${globalThis.url.api}/route/game/${ingame_id}`);
-
-                if (!route) {
-                    route = {
-                        ingame_id: ingame_id,
-                        pacenote: null
+                    if (route) {
+                        globalThis.app.telemetry.route = route;
+                    } else {
+                        globalThis.app.telemetry.route = {
+                            game: {
+                                id: telemetry.stage.id,
+                                code: globalThis.app.config.game
+                            }
+                        };
                     };
+
+                    globalThis.app.cache.routes.push(globalThis.app.telemetry.route);
                 };
 
-                globalThis.routes.push(route);
-                globalThis.telemetry_awaiting = false;
+                globalThis.app.telemetry.await = false;
             };
 
-            if (!route.pacenote) {
+            if (!globalThis.app.telemetry.route) {
                 return false;
             };
 
-            globalThis.window.webContents.send(`telemetry`, {
+            globalThis.app.window.webContents.send(`gameTelemetry`, {
                 route: {
-                    id: route.id,
-                    name: route.name,
-                    location: route.location,
-                    pacenote: route.pacenote
+                    id: globalThis.app.telemetry.route.id,
+                    name: globalThis.app.telemetry.route.name,
+                    location: globalThis.app.telemetry.route.location,
+                    pacenote: globalThis.app.telemetry.route.pacenote
                 },
                 ...telemetry
             });
         });
 
-        socket.bind(globalThis.config.port);
+        socket.bind(globalThis.app.config.port);
     });
-
-    globalThis.window.loadFile(`./window/index.html`);
-    globalThis.window.removeMenu();
-
-    // globalThis.window.webContents.openDevTools({ activate: false });
 });
 
 app.on(`second-instance`, function() {
-    if (globalThis.window.isMinimized()) {
-        globalThis.window.restore();
+    if (globalThis.app.window.isMinimized()) {
+        globalThis.app.window.restore();
     };
 
-    return globalThis.window.focus();
+    return globalThis.app.window.focus();
 });

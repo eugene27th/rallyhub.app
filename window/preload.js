@@ -2,74 +2,47 @@ const { contextBridge, ipcRenderer } = require(`electron/renderer`);
 
 
 contextBridge.exposeInMainWorld(`electronAPI`, {
-    config: {
-        get: function() {
-            return ipcRenderer.invoke(`config:get`);
-        },
-        set: function(config) {
-            return ipcRenderer.invoke(`config:set`, config);
-        }
+    setConfig: function(config) {
+        return ipcRenderer.invoke(`setConfig`, config);
     },
-    voice: {
-        get: async function(voice_id) {
-            return await ipcRenderer.invoke(`voice:get`, voice_id);
-        }
+    
+    getInitData: function() {
+        return ipcRenderer.invoke(`getInitData`);
     },
-    voices: {
-        get: async function() {
-            return await ipcRenderer.invoke(`voices:get`);
-        }
+
+    getRoute: async function(id) {
+        return await ipcRenderer.invoke(`getRoute`, id);
     },
-    route: {
-        get: async function(route_id) {
-            return await ipcRenderer.invoke(`route:get`, route_id);
-        },
-        open: async function() {
-            return await ipcRenderer.invoke(`route:open`);
-        },
-        save: async function(route) {
-            return await ipcRenderer.invoke(`route:save`, route);
-        },
-        suggest: async function(data) {
-            return await ipcRenderer.invoke(`route:suggest`, data);
-        }
+    openRoute: async function() {
+        return await ipcRenderer.invoke(`openRoute`);
     },
-    routes: {
-        get: async function() {
-            return await ipcRenderer.invoke(`routes:get`);
-        }
+    saveRoute: async function(data) {
+        return await ipcRenderer.invoke(`saveRoute`, data);
     },
-    commands: {
-        get: async function() {
-            return await ipcRenderer.invoke(`commands:get`);
-        }
+    sendRoute: async function(data) {
+        return await ipcRenderer.invoke(`sendRoute`, data);
     },
-    external: {
-        open: async function(url) {
-            return await ipcRenderer.invoke(`external:open`, url);
-        }
+
+    openExternal: async function(url) {
+        return await ipcRenderer.invoke(`openExternal`, url);
     },
-    window: {
-        close: function() {
-            return ipcRenderer.invoke(`window:close`);
-        },
-        minimize: function() {
-            return ipcRenderer.invoke(`window:minimize`);
-        }
+
+    minimizeWindow: function() {
+        return ipcRenderer.invoke(`minimizeWindow`);
     },
-    onUpdateTelemetry: function(callback) {
-        return ipcRenderer.on(`telemetry`, function(_event, value) {
+    closeWindow: function() {
+        return ipcRenderer.invoke(`closeWindow`);
+    },
+
+    onUpdateStatus: function(callback) {
+        return ipcRenderer.on(`updateStatus`, function(_event, code) {
+            return callback(code);
+        });
+    },
+
+    onGameTelemetry: function(callback) {
+        return ipcRenderer.on(`gameTelemetry`, function(_event, value) {
             return callback(value);
-        });
-    },
-    onAppReady: function(callback) {
-        return ipcRenderer.on(`ready`, function(_event) {
-            return callback();
-        });
-    },
-    onMajorUpdate: function(callback) {
-        return ipcRenderer.on(`major`, function(_event) {
-            return callback();
         });
     }
 });

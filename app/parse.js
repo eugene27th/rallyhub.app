@@ -5,20 +5,13 @@ const wrc23 = function(buffer) {
     try {
         const parsed = new Parser()
             .string(`packet_4cc`, { zeroTerminated: true, length: 4 })
-            .floatle(`game_total_time`)
             .doublele(`stage_length`)
-            .floatle(`stage_current_time`)
             .floatle(`stage_progress`)
             .uint16le(`route_id`)
-            .floatle(`vehicle_speed`)
             .uint8(`vehicle_tyre_state_bl`)
             .uint8(`vehicle_tyre_state_br`)
             .uint8(`vehicle_tyre_state_fl`)
             .uint8(`vehicle_tyre_state_fr`)
-            .floatle(`vehicle_brake_temperature_bl`)
-            .floatle(`vehicle_brake_temperature_br`)
-            .floatle(`vehicle_brake_temperature_fl`)
-            .floatle(`vehicle_brake_temperature_fr`)
             .parse(buffer);
 
         if (parsed.packet_4cc !== `sesu`) {
@@ -32,23 +25,20 @@ const wrc23 = function(buffer) {
                 progress: parsed.stage_progress,
                 distance: (parsed.stage_length / 100) * (parsed.stage_progress * 100)
             },
-            time: {
-                total: parsed.game_total_time,
-                stage: parsed.stage_current_time
-            },
             vehicle: {
-                speed: parsed.vehicle_speed * 3.6,
-                brake_temp: {
-                    fl: parsed.vehicle_brake_temperature_fl,
-                    fr: parsed.vehicle_brake_temperature_fr,
-                    rl: parsed.vehicle_brake_temperature_bl,
-                    rr: parsed.vehicle_brake_temperature_br
-                },
-                tyre_state: {
-                    fl: parsed.vehicle_tyre_state_fl,
-                    fr: parsed.vehicle_tyre_state_fr,
-                    rl: parsed.vehicle_tyre_state_bl,
-                    rr: parsed.vehicle_tyre_state_br
+                tyres: {
+                    fl: {
+                        state: parsed.vehicle_tyre_state_fl
+                    },
+                    fr: {
+                        state: parsed.vehicle_tyre_state_fr
+                    },
+                    rl: {
+                        state: parsed.vehicle_tyre_state_bl
+                    },
+                    rr: {
+                        state: parsed.vehicle_tyre_state_br
+                    }
                 }
             }
         };
@@ -135,16 +125,30 @@ const drt20 = function(buffer) {
 
         return {
             stage: {
+                id: parseInt(parsed.stage_length * 100000),
                 length: parsed.stage_length,
                 progress: parsed.stage_progress,
                 distance: parsed.stage_current_distance
-            },
-            time: {
-                total: parsed.game_total_time,
-                stage: parsed.stage_current_time
-            },
-            vehicle: {
-                speed: parsed.vehicle_speed * 3.6
+            }
+        };
+    } catch (error) {
+        return null;
+    };
+};
+
+const acr25 = function(buffer) {
+    try {
+        const parsed = new Parser()
+            .parse(buffer);
+
+        // if return
+
+        return {
+            stage: {
+                id: 1,
+                length: 10000,
+                progress: 50,
+                distance: 5000
             }
         };
     } catch (error) {
@@ -155,5 +159,6 @@ const drt20 = function(buffer) {
 
 module.exports = {
     wrc23,
-    drt20
+    drt20,
+    acr25
 };
