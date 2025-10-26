@@ -7,15 +7,38 @@
         
         <title>RALLYHUB</title>
 
-        <link rel="preload" href="./assets/fonts/roboto.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="./assets/fonts/roboto.woff2" as="font" type="font/woff2">
         <link rel="preload" href="./index.css" as="style">
         <link rel="stylesheet" href="./index.css">
     </head>
 
     <body>
         
+        <header>
+            <div class="draggable">
+                <div class="logo">
+                    <div class="name">RALLYHUB</div>
+                    <div class="version">1.0.7</div>
+                </div>
+                <div class="status"></div>
+            </div>
+            <div class="menu">
+                <button action="minimizeWindow">
+                    <img src="./assets/images/minimize.svg">
+                </button>
+                <button action="closeWindow">
+                    close
+                    <img src="./assets/images/xmark.svg">
+                </button>
+            </div>
+        </header>
+
+        <main>
+            
+        </main>
+
     </body>
     
-    <script type="module" src="./script.js"></script>
+    <script type="module" src="./index.js"></script>
     
 </html>

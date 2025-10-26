@@ -1,52 +1,6 @@
 const Parser = require(`binary-parser`).Parser;
 
 
-const wrc23 = function(buffer) {
-    try {
-        const parsed = new Parser()
-            .string(`packet_4cc`, { zeroTerminated: true, length: 4 })
-            .doublele(`stage_length`)
-            .floatle(`stage_progress`)
-            .uint16le(`route_id`)
-            .uint8(`vehicle_tyre_state_bl`)
-            .uint8(`vehicle_tyre_state_br`)
-            .uint8(`vehicle_tyre_state_fl`)
-            .uint8(`vehicle_tyre_state_fr`)
-            .parse(buffer);
-
-        if (parsed.packet_4cc !== `sesu`) {
-            return null;
-        };
-
-        return {
-            stage: {
-                id: parsed.route_id,
-                length: parsed.stage_length,
-                progress: parsed.stage_progress,
-                distance: (parsed.stage_length / 100) * (parsed.stage_progress * 100)
-            },
-            vehicle: {
-                tyres: {
-                    fl: {
-                        state: parsed.vehicle_tyre_state_fl
-                    },
-                    fr: {
-                        state: parsed.vehicle_tyre_state_fr
-                    },
-                    rl: {
-                        state: parsed.vehicle_tyre_state_bl
-                    },
-                    rr: {
-                        state: parsed.vehicle_tyre_state_br
-                    }
-                }
-            }
-        };
-    } catch (error) {
-        return null;
-    };
-};
-
 const drt20 = function(buffer) {
     try {
         const parsed = new Parser()
@@ -136,6 +90,52 @@ const drt20 = function(buffer) {
     };
 };
 
+const wrc23 = function(buffer) {
+    try {
+        const parsed = new Parser()
+            .string(`packet_4cc`, { zeroTerminated: true, length: 4 })
+            .doublele(`stage_length`)
+            .floatle(`stage_progress`)
+            .uint16le(`route_id`)
+            .uint8(`vehicle_tyre_state_bl`)
+            .uint8(`vehicle_tyre_state_br`)
+            .uint8(`vehicle_tyre_state_fl`)
+            .uint8(`vehicle_tyre_state_fr`)
+            .parse(buffer);
+
+        if (parsed.packet_4cc !== `sesu`) {
+            return null;
+        };
+
+        return {
+            stage: {
+                id: parsed.route_id,
+                length: parsed.stage_length,
+                progress: parsed.stage_progress,
+                distance: (parsed.stage_length / 100) * (parsed.stage_progress * 100)
+            },
+            vehicle: {
+                tyres: {
+                    fl: {
+                        state: parsed.vehicle_tyre_state_fl
+                    },
+                    fr: {
+                        state: parsed.vehicle_tyre_state_fr
+                    },
+                    rl: {
+                        state: parsed.vehicle_tyre_state_bl
+                    },
+                    rr: {
+                        state: parsed.vehicle_tyre_state_br
+                    }
+                }
+            }
+        };
+    } catch (error) {
+        return null;
+    };
+};
+
 const acr25 = function(buffer) {
     try {
         const parsed = new Parser()
@@ -158,7 +158,7 @@ const acr25 = function(buffer) {
 
 
 module.exports = {
-    wrc23,
     drt20,
+    wrc23,
     acr25
 };

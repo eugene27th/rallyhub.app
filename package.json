@@ -2,7 +2,7 @@
     "name": "rallyhub",
     "author": "eugene27th",
     "version": "1.1.0",
-    "main": "./app/index.js",
+    "main": "./core/app/index.js",
     "scripts": {
         "start": "electron .",
         "pack": "electron-builder --dir",

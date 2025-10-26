@@ -1,47 +1,44 @@
-const { contextBridge, ipcRenderer } = require(`electron/renderer`);
+const electron = require(`electron/renderer`);
 
 
-contextBridge.exposeInMainWorld(`electronAPI`, {
+electron.contextBridge.exposeInMainWorld(`electronAPI`, {
     setConfig: function(config) {
-        return ipcRenderer.invoke(`setConfig`, config);
+        return electron.ipcRenderer.invoke(`setConfig`, config);
     },
     
-    getInitData: function() {
-        return ipcRenderer.invoke(`getInitData`);
+    getAppData: function() {
+        return electron.ipcRenderer.invoke(`getAppData`);
     },
 
-    getRoute: async function(id) {
-        return await ipcRenderer.invoke(`getRoute`, id);
+    editorOpenRoute: async function() {
+        return await electron.ipcRenderer.invoke(`editorOpenRoute`);
     },
-    openRoute: async function() {
-        return await ipcRenderer.invoke(`openRoute`);
+    editorSaveRoute: async function() {
+        return await electron.ipcRenderer.invoke(`editorSaveRoute`);
     },
-    saveRoute: async function(data) {
-        return await ipcRenderer.invoke(`saveRoute`, data);
-    },
-    sendRoute: async function(data) {
-        return await ipcRenderer.invoke(`sendRoute`, data);
+    editorSendRoute: async function() {
+        return await electron.ipcRenderer.invoke(`editorSendRoute`);
     },
 
-    openExternal: async function(url) {
-        return await ipcRenderer.invoke(`openExternal`, url);
+    openExternalLink: async function(url) {
+        return await electron.ipcRenderer.invoke(`openExternalLink`, url);
     },
 
     minimizeWindow: function() {
-        return ipcRenderer.invoke(`minimizeWindow`);
+        return electron.ipcRenderer.invoke(`minimizeWindow`);
     },
     closeWindow: function() {
-        return ipcRenderer.invoke(`closeWindow`);
+        return electron.ipcRenderer.invoke(`closeWindow`);
     },
 
-    onUpdateStatus: function(callback) {
-        return ipcRenderer.on(`updateStatus`, function(_event, code) {
+    onStartupStatus: function(callback) {
+        return electron.ipcRenderer.on(`startupStatus`, function(_event, code) {
             return callback(code);
         });
     },
 
     onGameTelemetry: function(callback) {
-        return ipcRenderer.on(`gameTelemetry`, function(_event, value) {
+        return electron.ipcRenderer.on(`gameTelemetry`, function(_event, value) {
             return callback(value);
         });
     }
