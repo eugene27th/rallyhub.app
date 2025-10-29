@@ -117,16 +117,16 @@ const wrc23 = function(buffer) {
             vehicle: {
                 tyres: {
                     fl: {
-                        state: parsed.vehicle_tyre_state_fl
+                        state: parsed.vehicle_tyre_state_fl === 0 ? 0 : 1
                     },
                     fr: {
-                        state: parsed.vehicle_tyre_state_fr
+                        state: parsed.vehicle_tyre_state_fr === 0 ? 0 : 1
                     },
                     rl: {
-                        state: parsed.vehicle_tyre_state_bl
+                        state: parsed.vehicle_tyre_state_bl === 0 ? 0 : 1
                     },
                     rr: {
-                        state: parsed.vehicle_tyre_state_br
+                        state: parsed.vehicle_tyre_state_br === 0 ? 0 : 1
                     }
                 }
             }

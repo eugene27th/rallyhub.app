@@ -2,7 +2,7 @@
     "version": "1.1.0-rc0",
     "domain": "rallyhub.ru",
     "port": 20220,
-    "game": "drt20",
+    "game": "wrc23",
     "voice": 1,
     "rate": 100,
     "volume": 100

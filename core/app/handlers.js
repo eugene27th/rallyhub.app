@@ -3,7 +3,8 @@ const fs = require(`fs`);
 const electron = require(`electron`);
 const electronMain = require(`electron/main`);
 
-const appCommon = require(`./common`);
+const appLog = require(`./log`);
+const tryFetch = require(`./fetch`);
 
 
 module.exports = function() {
@@ -38,7 +39,7 @@ module.exports = function() {
         try {
             return JSON.parse(fs.readFileSync(response.filePaths[0]));
         } catch (error) {
-            appCommon.writeLog(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
+            appLog(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
             return null;
         };
     });
@@ -64,7 +65,7 @@ module.exports = function() {
         try {
             fs.writeFileSync(response.filePath, JSON.stringify(data, null, 4));
         } catch (error) {
-            appCommon.writeLog(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}". Код: ${error.code}.`);
+            appLog(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}". Код: ${error.code}.`);
             return false;
         };
 
@@ -72,7 +73,7 @@ module.exports = function() {
     });
 
     electronMain.ipcMain.handle(`editorSendRoute`, async function() {
-        return await appCommon.tryFetch(`${globalThis.app.url.api}/route/suggest`, null, {
+        return await tryFetch(`${globalThis.app.url.api}/route/suggest`, null, {
             method: `POST`,
             headers: {
                 [`Content-Type`]: `application/json`

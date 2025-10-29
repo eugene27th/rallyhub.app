@@ -7,14 +7,16 @@ if (!electronMain.app.requestSingleInstanceLock()) {
 const fs = require(`fs`);
 const path = require(`path`);
 
-const appCommon = require(`./common`);
-const appHandlers = require(`./handlers`);
+const appLog = require(`./log`);
+const appPrepare = require(`./prepare`);
 const appStartup = require(`./startup`);
+const appHandlers = require(`./handlers`);
+
 const telemetryListen = require(`../telemetry/listen`);
 
 
 electronMain.app.whenReady().then(async function() {
-    appStartup.setupEnv();
+    appPrepare();
 
     globalThis.app.window = new electronMain.BrowserWindow({
         width: 1200,
@@ -44,15 +46,17 @@ electronMain.app.whenReady().then(async function() {
         globalThis.app.window.focus();
     });
 
-    const startupPromise = appStartup.setupApp();
+    const startupPromise = appStartup();
 
     globalThis.app.window.webContents.on(`did-finish-load`, async function() {
+        appHandlers();
+
         let startupStatus;
 
         try {
             startupStatus = await startupPromise;
         } catch (error) {
-            appCommon.writeLog(`Ошибка при старте приложения: ${error.stack || error}.`);
+            appLog(`Ошибка при старте приложения: ${error.stack || error}.`);
 
             startupStatus = {
                 code: `startupError`
@@ -68,8 +72,6 @@ electronMain.app.whenReady().then(async function() {
             telemetryListen.start();
         };
 
-        appHandlers();
-
         globalThis.app.window.webContents.send(`startupStatus`, startupStatus.code);
     });
 
@@ -79,7 +81,7 @@ electronMain.app.whenReady().then(async function() {
         try {
             fs.writeFileSync(globalThis.app.path.config, JSON.stringify(globalThis.app.config, null, 4));
         } catch (error) {
-            appCommon.writeLog(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
+            appLog(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
         };
 
         electronMain.app.quit();

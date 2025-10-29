@@ -3,6 +3,29 @@ const socket = require(`dgram`).createSocket(`udp4`);
 const telemetryParse = require(`./parse`);
 
 
+const defaultTelemetryStage = {
+    currentDistance: 0,
+    completedBriefing: false,
+    completedWaypoints: [],
+    vehicle: {
+        tyres: {
+            fl: {
+                state: 0
+            },
+            fr: {
+                state: 0
+            },
+            rl: {
+                state: 0
+            },
+            rr: {
+                state: 0
+            }
+        }
+    }
+};
+
+
 const listener = function(message) {
     if (!telemetryParse[globalThis.app.config.game] || globalThis.app.telemetry.await) {
         return false;
@@ -32,12 +55,7 @@ const listener = function(message) {
             };
         };
 
-        globalThis.app.telemetry.stage = {
-            currentDistance: 0,
-            completedBriefing: false,
-            completedWaypoints: []
-        };
-
+        globalThis.app.telemetry.stage = defaultTelemetryStage;
         globalThis.app.telemetry.await = false;
     };
 
@@ -46,11 +64,7 @@ const listener = function(message) {
     };
 
     if (globalThis.app.telemetry.stage.currentDistance <= 0 && globalThis.app.telemetry.stage.completedWaypoints.length > 1) {
-        globalThis.app.telemetry.stage = {
-            currentDistance: 0,
-            completedBriefing: false,
-            completedWaypoints: []
-        };
+        globalThis.app.telemetry.stage = defaultTelemetryStage;
     };
 
     globalThis.app.telemetry.stage.currentDistance = telemetry.stage.distance;
@@ -84,6 +98,18 @@ const listener = function(message) {
         for (const waypoint of waypointsToBeVoiced) {
             globalThis.app.telemetry.stage.completedWaypoints.push(waypoint.distance);
             commandsToBeVoiced = commandsToBeVoiced.concat(waypoint.commands);
+        };
+    };
+
+    if (telemetry.vehicle?.tyres) {
+        for (const [tyre, data] of Object.entries(telemetry.vehicle.tyres)) {
+            if (globalThis.app.telemetry.stage.vehicle.tyres[tyre].state !== data.state) {
+                if (data.state === 1) {
+                    commandsToBeVoiced.push(`puncture_${tyre}`);
+                };
+                
+                globalThis.app.telemetry.stage.vehicle.tyres[tyre].state = data.state;
+            };
         };
     };
 
