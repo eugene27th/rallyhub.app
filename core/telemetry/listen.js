@@ -55,7 +55,7 @@ const listener = function(message) {
             };
         };
 
-        globalThis.app.telemetry.stage = defaultTelemetryStage;
+        globalThis.app.telemetry.stage = structuredClone(defaultTelemetryStage);
         globalThis.app.telemetry.await = false;
     };
 
@@ -64,7 +64,7 @@ const listener = function(message) {
     };
 
     if (globalThis.app.telemetry.stage.currentDistance <= 0 && globalThis.app.telemetry.stage.completedWaypoints.length > 1) {
-        globalThis.app.telemetry.stage = defaultTelemetryStage;
+        globalThis.app.telemetry.stage = structuredClone(defaultTelemetryStage);
     };
 
     globalThis.app.telemetry.stage.currentDistance = telemetry.stage.distance;

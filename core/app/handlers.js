@@ -21,11 +21,11 @@ module.exports = function() {
 
     electronMain.ipcMain.handle(`editorOpenRoute`, async function() {
         const response = await electronMain.dialog.showOpenDialog(globalThis.app.window, {
-            properties: ['openFile'],
+            properties: [`openFile`],
             filters: [
                 {
-                    name: 'JSON',
-                    extensions: ['json']
+                    name: `JSON`,
+                    extensions: [`json`]
                 }
             ]
         }).catch(function() {
@@ -47,11 +47,11 @@ module.exports = function() {
     electronMain.ipcMain.handle(`editorSaveRoute`, async function() {
         const response = await electronMain.dialog.showSaveDialog(globalThis.app.window, {
             defaultPath: `${data.location} - ${data.name}.json`,
-            properties: ['openFile'],
+            properties: [`openFile`],
             filters: [
                 {
-                    name: 'JSON',
-                    extensions: ['json']
+                    name: `JSON`,
+                    extensions: [`json`]
                 }
             ]
         }).catch(function() {

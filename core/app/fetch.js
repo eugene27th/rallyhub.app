@@ -22,15 +22,15 @@ module.exports = async function(url, parse = `json`, options = {}, retries = 3) 
                 return false;
             };
 
-            if (parse === 'json') {
+            if (parse === `json`) {
                 return await response.json();
             };
 
-            if (parse === 'text') {
+            if (parse === `text`) {
                 return await response.text();
             };
 
-            if (parse === 'buffer') {
+            if (parse === `buffer`) {
                 return await response.arrayBuffer();
             };
 

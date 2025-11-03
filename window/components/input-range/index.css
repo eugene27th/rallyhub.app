@@ -1,0 +1,41 @@
+input-range {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    border-radius: 2px;
+    overflow: hidden;
+
+    input {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 36px;
+        margin: 0;
+        cursor: pointer;
+        outline: none;
+        overflow: hidden;
+
+        &::-webkit-slider-runnable-track {
+            height: 100%;
+            background: var(--color-range-slider-track);
+        }
+
+        &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 40px;
+            width: 3px;
+            background-color: var(--color-range-slider-thumb);
+            box-shadow: -400px 0 0 400px var(--color-range-slider-thumb-fill);
+        }
+    }
+
+    .value {
+        position: absolute;
+        left: 15px;
+        font-weight: 500;
+        color: var(--color-range-font);
+        pointer-events: none;
+    }
+}

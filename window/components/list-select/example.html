@@ -1,0 +1,19 @@
+<list-select id="list" placeholder="placeholder"></list-select>
+
+<script>
+    const list = document.getElementById(`list`);
+
+    // получить значение
+    console.log(list.value);
+
+    // добавить пункт
+    list.addItem(`value`, `content`);
+
+    // удалить все пункты
+    list.removeItems();
+
+    // добавить листенер на изменение выбранного значения
+    list.addEventListener(`change`, function() {
+        console.log(this.value);
+    });
+</script>

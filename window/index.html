@@ -7,38 +7,114 @@
         
         <title>RALLYHUB</title>
 
-        <link rel="preload" href="./assets/fonts/roboto.woff2" as="font" type="font/woff2">
-        <link rel="preload" href="./index.css" as="style">
         <link rel="stylesheet" href="./index.css">
     </head>
 
     <body>
-        
         <header>
             <div class="draggable">
                 <div class="logo">
                     <div class="name">RALLYHUB</div>
-                    <div class="version">1.0.7</div>
+                    <div class="version"></div>
                 </div>
                 <div class="status"></div>
             </div>
-            <div class="menu">
-                <button action="minimizeWindow">
+            <div class="options">
+                <button id="minimizeWindow">
                     <img src="./assets/images/minimize.svg">
                 </button>
-                <button action="closeWindow">
-                    close
+                <button id="closeWindow">
                     <img src="./assets/images/xmark.svg">
                 </button>
             </div>
         </header>
-
         <main>
-            
+            <div class="section">
+                <div class="block">
+                    <div class="name">Игра</div>
+                    <input-select id="settingGame"></input-select>
+                </div>
+                <div class="block">
+                    <div class="name">Озвучка</div>
+                    <div class="row">
+                        <input-select id="settingVoice"></input-select>
+                        <button>
+                            <img src="./assets/images/volume.svg">
+                        </button>
+                    </div>
+                </div>
+                <div class="block">
+                    <div class="name">Скорость воспроизведения</div>
+                    <input-range id="settingRate" min="100" max="150" step="1" value="100"></input-range>
+                </div>
+                <div class="block">
+                    <div class="name">Громкость</div>
+                    <input-range id="settingVolume" min="0" max="100" step="1" value="50"></input-range>
+                </div>
+            </div>
+            <div class="section">
+                <div class="title">РЕДАКТОР СТЕНОГРАММ</div>
+                <div class="row">
+                    <div class="column">
+                        <div class="block">
+                            <div class="name">Локация</div>
+                            <input-select id="editorLocations">
+                                <option display>Выберите игру</option>
+                                <option value="1">ACON BY AOC RALLY PACIFICO SALWADOR LABUBA</option>
+                            </input-select>
+                        </div>
+                        <div class="block">
+                            <div class="name">Спецучастки</div>
+                            <list-select id="editorRouteList" placeholder="Выберите локацию"></list-select>
+                        </div>
+                        <div class="block">
+                            <div class="row">
+                                <button id="editorOpenRoute">Открыть</button>
+                                <button id="editorSaveRoute">Сохранить</button>
+                            </div>
+                            <button id="editorSuggestRoute">Отправить на сервер</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="column">
+                        <div class="block">
+                            <div class="name">Новая путевая точка</div>
+                            <div class="row">
+                                <input id="editorNewWaypointDistance" type="number" value="0">
+                                <button id="editorCreateWaypoint">Создать точку</button>
+                            </div>
+                        </div>
+                        <div class="block">
+                            <div class="name">Путевые точки</div>
+                            <list-select id="editorWaypointList" placeholder="Выберите спецучасток"></list-select>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="column">
+                        <div class="block">
+                            <div class="name">Выбранная путевая точка</div>
+                            <div class="row">
+                                <input id="editorSelectedWaypointDistance" type="number" value="0">
+                                <button id="editorDeleteWaypoint">Удалить точку</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="block">
+                                <div class="name">Выбранные команды</div>
+                                <list-select id="editorWaypointCommandList" placeholder="Выберите точку"></list-select>
+                            </div>
+                            <div class="block">
+                                <div class="name">Все команды</div>
+                                <input id="editorAllCommandSearch" type="text" placeholder="Поиск...">
+                                <list-select id="editorAllCommandList"></list-select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
-
     </body>
-    
+
     <script type="module" src="./index.js"></script>
-    
+
 </html>
