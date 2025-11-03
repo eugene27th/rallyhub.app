@@ -35,7 +35,7 @@ list-select {
             background-color: var(--color-list-item-background-selected);
 
             span {
-                color: var(--color-list-item-font-secondary);
+                color: var(--color-list-item-font);
             }
         }
     }

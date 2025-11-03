@@ -38,7 +38,9 @@ module.exports = async function() {
     globalThis.app.data.voices = voices.value;
     globalThis.app.data.commands = commands.value;
 
-    telemetrySetup();
+    telemetrySetup.drt20();
+    telemetrySetup.wrc23();
+    telemetrySetup.acr25();
 
     return {
         code: `appReady`

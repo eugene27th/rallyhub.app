@@ -187,8 +187,8 @@ const acr25 = function() {
 };
 
 
-module.exports = function() {
-    drt20(),
-    wrc23(),
-    acr25()
+module.exports = {
+    drt20,
+    wrc23,
+    acr25
 };
