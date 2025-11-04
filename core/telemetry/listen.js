@@ -40,8 +40,8 @@ const listener = function(message) {
     if (globalThis.app.telemetry.route?.game?.id !== telemetry.stage.id || globalThis.app.telemetry.route?.game?.code !== globalThis.app.config.game) {
         globalThis.app.telemetry.await = true;
 
-        const route = globalThis.app.data.routes.find(function(element) {
-            return element.game.id === telemetry.stage.id && element.game.code === globalThis.app.config.game;
+        const route = globalThis.app.data.routes.find(function(i) {
+            return i.game.id === telemetry.stage.id && i.game.code === globalThis.app.config.game;
         });
 
         if (route) {
@@ -73,8 +73,8 @@ const listener = function(message) {
 
     if (!globalThis.app.telemetry.stage.completedBriefing) {
         if (globalThis.app.telemetry.stage.currentDistance <= 0) {
-            const briefingWaypoint = globalThis.app.telemetry.route.pacenote.find(function(waypoint) {
-                return waypoint.distance === 0;
+            const briefingWaypoint = globalThis.app.telemetry.route.pacenote.find(function(i) {
+                return i.distance === 0;
             });
 
             if (briefingWaypoint) {
@@ -125,12 +125,17 @@ const listener = function(message) {
 };
 
 
+const start = function() {
+    socket.on(`message`, listener);
+    socket.bind(globalThis.app.config.port);
+};
+
+const stop = function() {
+    socket.close();
+};
+
+
 module.exports = {
-    start: function() {
-        socket.on(`message`, listener);
-        socket.bind(globalThis.app.config.port);
-    },
-    stop: function() {
-        socket.close();
-    }
+    start,
+    stop
 }

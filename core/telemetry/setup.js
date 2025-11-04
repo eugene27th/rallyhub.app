@@ -73,16 +73,16 @@ const wrc23 = function() {
         return false;
     };
 
-    const duplicatedPortPacket = telemetryConfig.udp.packets.find(function(element) {
-        return element.port === globalThis.app.config.port && element.structure !== `rallyhub`;
+    const duplicatedPortPacket = telemetryConfig.udp.packets.find(function(i) {
+        return i.port === globalThis.app.config.port && i.structure !== `rallyhub`;
     });
 
     if (duplicatedPortPacket) {
         appLog(`В конфигурационном файле телеметрии WRC23 найден пакет "${duplicatedPortPacket.structure}" с портом, используемым приложением.`);
     };
 
-    const existPacketIndex = telemetryConfig.udp.packets.findIndex(function(element) {
-        return element.structure === `rallyhub`;
+    const existPacketIndex = telemetryConfig.udp.packets.findIndex(function(i) {
+        return i.structure === `rallyhub`;
     });
 
     if (existPacketIndex < 0) {

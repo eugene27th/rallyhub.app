@@ -43,15 +43,16 @@ input-select {
         position: absolute;
         width: 100%;
         max-height: 360px;
+        margin-top: 1px;
         display: none;
-        border-radius: 2px;
+        border-radius: 0 0 2px 2px;
         overflow-y: auto;
         z-index: 1;
 
         .option {
             height: 34px;
             align-content: center;
-            border-top: 1px solid var(--color-select-option-divider);
+            border-bottom: 1px solid var(--color-select-option-divider);
             background-color: var(--color-select-option-background);
             text-overflow: ellipsis;
             overflow: hidden;
@@ -61,7 +62,7 @@ input-select {
             }
 
             &:last-child {
-                border-radius: 0 0 2px 2px;
+                border: none;
             }
         }
     }

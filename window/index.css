@@ -81,6 +81,7 @@ body {
     font-size: 14px;
     color: var(--color-main-font-primary);
     background-color: var(--color-main-background);
+    user-select: none;
 }
 
 

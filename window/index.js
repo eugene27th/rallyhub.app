@@ -29,7 +29,7 @@ const dom = {
         }
     },
     main: {
-        setting: {
+        settings: {
             game: document.getElementById(`settingGame`),
             voice: document.getElementById(`settingVoice`),
             rate: document.getElementById(`settingRate`),
@@ -37,11 +37,28 @@ const dom = {
         },
         editor: {
             locations: document.getElementById(`editorLocations`),
-            routes: document.getElementById(`editorRouteList`),
-            waypoints: document.getElementById(`editorWaypointList`),
+            routes: document.getElementById(`editorRoutes`),
+            waypoints: document.getElementById(`editorWaypoints`),
             commands: {
-                all: document.getElementById(`editorAllCommandList`)
-            } 
+                list: document.getElementById(`editorAllCommands`),
+                search: document.getElementById(`editorAllCommandSearch`)
+            },
+            waypoint: {
+                new: {
+                    create: document.getElementById(`editorNewWaypointCreate`),
+                    distance: document.getElementById(`editorNewWaypointDistance`)
+                },
+                selected: {
+                    delete: document.getElementById(`editorSelectedWaypointDelete`),
+                    distance: document.getElementById(`editorSelectedWaypointDistance`),
+                    commands: document.getElementById(`editorSelectedWaypointCommands`)
+                }
+            },
+            route: {
+                open: document.getElementById(`editorOpenRoute`),
+                save: document.getElementById(`editorSaveRoute`),
+                suggest: document.getElementById(`editorSuggestRoute`)
+            }
         }
     }
 };
@@ -74,78 +91,78 @@ const registerComponent = async function(name) {
                 this.originalChilds = [...this.childNodes];
                 this.innerHTML = html;
 
-                console.log(`debug: component "${name}" connected`);
-
                 await init(this);
             };
         }
     );
-
-    console.log(`debug: component "${name}" loaded`);
 };
 
+const playCommand = async function(command) {
+    const base64Audio = app.audio.voice.commands[command];
 
-const selectGame = async function(game) {
-    const locations = new Set();
+    if (!base64Audio) {
+        return;
+    };
 
-    for (const route of app.data.routes) {
-        if (route.game.code === game) {
-            locations.add(route.location);
+    app.audio.element.src = `data:audio/webm;base64,${base64Audio}`;
+    app.audio.element.load();
+
+    app.audio.element.volume = app.data.config.volume / 100;
+    app.audio.element.playbackRate = app.data.config.rate / 100;
+
+    if (app.audio.playlist.length > 5 && app.data.config.rate < 110) {
+        app.audio.element.playbackRate = 1.1;
+    };
+
+    app.audio.playing = true;
+
+    try {
+        await app.audio.element.play();
+    } catch (error) {
+        app.audio.playing = false;
+        return;
+    };
+
+    await new Promise(function(resolve) {
+        return app.audio.element.onended = function() {
+            return resolve();
         };
-    };
-
-    dom.main.editor.locations.removeOptions();
-    dom.main.editor.routes.removeItems();
-    dom.main.editor.waypoints.removeItems();
-
-    dom.main.editor.locations.addOption(null, `Выберите локацию`, false, true);    
-
-    for (const location of locations.values()) {
-        dom.main.editor.locations.addOption(location, location);
-    };
-
-    console.log(`выбрана игра: ${game}`);
-};
-
-const selectLocation = async function(location) {
-    dom.main.editor.routes.removeItems();
-    dom.main.editor.waypoints.removeItems();
-
-    for (const route of app.data.routes) {
-        if (route.location === location) {
-            dom.main.editor.routes.addItem(route.id, route.name);
-        };
-    };
-
-    console.log(`выбрана локация: ${location}`);
-};
-
-const selectRoute = async function(id) {
-    dom.main.editor.waypoints.removeItems();
-
-    app.editor.selected.route = app.data.routes.find(function(route) {
-        return route.id === id;
     });
 
-    for (const waypoint of app.editor.selected.route.pacenote) {
-        let commands = ``;
+    app.audio.playing = false;
+};
 
-        for (const command of waypoint.commands) {
-            commands += ` - ${(app.data.commands.find(function(element) {return element.key === command })).value}`;
+const audioWorker = async function() {
+    while (true) {
+        if (app.audio.playlist.length === 0) {
+            await new Promise(function(resolve) {
+                return setTimeout(resolve, 100);
+            });
+
+            continue;
         };
 
-        dom.main.editor.waypoints.addItem(waypoint.distance, `${waypoint.distance} <span>${commands}</span>`);
-    };
+        const command = app.audio.playlist.shift();
+        await playCommand(command);
+    }
+};
 
-    console.log(`выбран спецучасток: ${app.editor.selected.route.name}`);
+const getCommandName = function(command) {
+    return (app.data.commands.find(function(i) {
+        return i.key === command;
+    })).name;
 };
 
 
 window.electronAPI.onStartupStatus(async function(code) {
+    // регистрируем компоненты
     await registerComponent(`input-select`);
     await registerComponent(`input-range`);
+    await registerComponent(`list-click`);
     await registerComponent(`list-select`);
 
+
+    // обязательные хендлеры
     dom.header.options.minimize.addEventListener(`click`, async function() {
         await window.electronAPI.minimizeWindow();
     });
@@ -154,23 +171,42 @@ window.electronAPI.onStartupStatus(async function(code) {
         await window.electronAPI.closeWindow();
     });
 
+
+    // работа с внеплановыми кодами
     console.log(code);
 
-    if (code === `majorUpdate`) {
-        // открываем экран ручного обновления
+    if (code !== `appReady`) {
+        if (code === `majorUpdate`) {
+            // открываем экран ручного обновления
+            return false;
+        };
+
+        if (code === `networkError`) {
+            // открываем экран ошибки с соответствующей причиной
+            return false;
+        };
+
+        if (code === `fileSystemError`) {
+            // открываем экран ошибки с соответствующей причиной
+            return false;
+        };
+
+        if (code === `updateError`) {
+            // открываем экран ошибки с соответствующей причиной
+            return false;
+        };
+
+        if (code === `startupError`) {
+            // открываем экран ошибки с соответствующей причиной
+            return false;
+        };
+
+        // открываем экран ошибки без указания причины
         return false;
     };
 
-    if (code === `networkError`) {
-        // открываем экран плохого соединения
-        return false;
-    };
 
-    if (code === `fileSystemError` || code === `updateError` || code === `startupError`) {
-        // открываем экран ошибки
-        return false;
-    };
-
+    // нода приложения готова, настраиваем окно
     app.data = await window.electronAPI.getAppData();
 
     console.log(app.data);
@@ -178,107 +214,145 @@ window.electronAPI.onStartupStatus(async function(code) {
     dom.header.version.innerText = app.data.config.version;
 
     for (const game of [[`acr25`, `Assetto Corsa Rally`], [`wrc23`, `EA SPORTS WRC`], [`drt20`, `DiRT Rally 2.0`]]) {
-        dom.main.setting.game.addOption(game[0], game[1], game[0] === app.data.config.game);
+        dom.main.settings.game.addOption(game[0], game[1], game[0] === app.data.config.game);
     };
 
-    dom.main.setting.rate.setValue(app.data.config.rate);
-    dom.main.setting.volume.setValue(app.data.config.volume);
+    dom.main.settings.rate.setValue(app.data.config.rate);
+    dom.main.settings.volume.setValue(app.data.config.volume);
 
     for (const voice of app.data.voices) {
-        dom.main.setting.voice.addOption(voice.id, voice.name, voice.id === app.data.config.voice);
+        dom.main.settings.voice.addOption(voice.id, voice.name, voice.id === app.data.config.voice);
     };
+
+    app.audio.voice = app.data.voices[app.data.voices.findIndex(function(i) { return i.id === app.data.config.voice })];
 
     for (const command of app.data.commands) {
         if (!command.special) {
-            dom.main.editor.commands.all.addItem(command.key, command.value);
+            dom.main.editor.commands.list.addItem(command.key, command.name);
         };
     };
 
 
-    dom.main.setting.game.addEventListener(`change`, function() {
-        selectGame(this.value);
+    // хендлеры
+    dom.main.settings.game.addEventListener(`change`, function() {
+        const locations = new Set();
+
+        for (const route of app.data.routes) {
+            if (route.game.code === this.value) {
+                locations.add(route.location);
+            };
+        };
+
+        dom.main.editor.locations.removeOptions();
+        dom.main.editor.routes.removeItems();
+        dom.main.editor.waypoints.removeItems();
+        dom.main.editor.waypoint.selected.commands.removeItems();
+        dom.main.editor.waypoint.selected.distance.value = 0;
+
+        dom.main.editor.locations.setDisplayName(`Выберите локацию`);
+
+        for (const location of locations.values()) {
+            dom.main.editor.locations.addOption(location, location);
+        };
+
+        console.log(`выбрана игра: ${this.value}`);
     });
 
     dom.main.editor.locations.addEventListener(`change`, function() {
-        selectLocation(this.value); 
+        dom.main.editor.routes.removeItems();
+        dom.main.editor.waypoints.removeItems();
+        dom.main.editor.waypoint.selected.commands.removeItems();
+        dom.main.editor.waypoint.selected.distance.value = 0;
+
+        for (const route of app.data.routes) {
+            if (route.location === this.value) {
+                dom.main.editor.routes.addItem(route.id, route.name);
+            };
+        };
+
+        console.log(`выбрана локация: ${this.value}`);
     });
 
     dom.main.editor.routes.addEventListener(`change`, function() {
-        selectRoute(parseInt(this.value)); 
+        const routeId = parseInt(this.value);
+
+        if (app.editor.selected.route.id === routeId) {
+            return;
+        };
+
+        app.editor.selected.route = app.data.routes.find(function(i) {
+            return i.id === routeId;
+        });
+
+        dom.main.editor.waypoints.removeItems();
+        dom.main.editor.waypoint.selected.commands.removeItems();
+        dom.main.editor.waypoint.selected.distance.value = 0;
+
+        for (const waypoint of app.editor.selected.route.pacenote) {
+            let commands = ``;
+
+            for (const commandKey of waypoint.commands) {
+                commands += ` - ${getCommandName(commandKey)}`;
+            };
+
+            dom.main.editor.waypoints.addItem(waypoint.distance, `<code>${waypoint.distance}</code> <span>${commands}</span>`);
+        };
+
+        console.log(`выбран спецучасток: ${app.editor.selected.route.name}`);
+    });
+
+    dom.main.editor.waypoints.addEventListener(`change`, function() {
+        const waypointDistance = parseInt(this.value);
+
+        if (app.editor.selected.waypoint.distance === waypointDistance) {
+            return;
+        };
+        
+        app.editor.selected.waypoint = app.editor.selected.route.pacenote.find(function(x) {
+            return x.distance === waypointDistance;
+        });
+
+        console.log(app.editor.selected.waypoint);
+
+        dom.main.editor.waypoint.selected.commands.removeItems();
+
+        for (const waypointCommand of app.editor.selected.waypoint.commands) {
+            dom.main.editor.waypoint.selected.commands.addItem(app.editor.selected.waypoint.distance, getCommandName(waypointCommand));
+        };
+
+        dom.main.editor.waypoint.selected.distance.value = app.editor.selected.waypoint.distance;
+    });
+
+    dom.main.editor.commands.list.addEventListener(`change`, function() {
+        dom.main.editor.waypoint.selected.commands.addItem(this.value, getCommandName(this.value));
+    });
+
+    dom.main.editor.commands.search.addEventListener(`input`, function() {
+        dom.main.editor.commands.list.searchItems(this.value);
     });
 
 
-    // закрываем/удаляем загрузочный экран
+    // окно настроено, удаляем загрузочный экран
 
 
-    app.audio.voice = app.data.voices[0];
 
-    const playCommand = async function(command) {
-        const base64Audio = app.audio.voice.commands[command];
-
-        if (!base64Audio) {
-            return;
-        };
-
-        app.audio.element.src = `data:audio/webm;base64,${base64Audio}`;
-        app.audio.element.load();
-
-        app.audio.element.volume = app.data.config.volume / 100;
-        app.audio.element.playbackRate = app.data.config.rate / 100;
-
-        if (app.audio.playlist.length > 5 && app.data.config.rate < 110) {
-            app.audio.element.playbackRate = 1.1;
-        };
-
-        app.audio.playing = true;
-
-        try {
-            await app.audio.element.play();
-        } catch (error) {
-            app.audio.playing = false;
-            return;
-        };
-
-        await new Promise(function(resolve) {
-            return app.audio.element.onended = function() {
-                return resolve();
-            };
-        });
-
-        app.audio.playing = false;
-    };
-
-    const audioWorker = async function() {
-        while (true) {
-            if (app.audio.playlist.length === 0) {
-                await new Promise(function(resolve) {
-                    return setTimeout(resolve, 100);
-                });
-
-                continue;
-            };
-
-            const command = app.audio.playlist.shift();
-            await playCommand(command);
-        }
-    };
-
+    // запускаем аудио воркер
     audioWorker();
 
 
+    // начинаем слушать телеметрию
     window.electronAPI.onGameTelemetry(function(telemetry) {
-        // слушаем и добавляем команды в плейлист
-        //      * команды для озвучки будут приходить в этом же объекте
-        // слушаем и отрисовываем необходимые штуки:
-        //      - спецучасток и пройденные метры в хедер окна
-        //      - пройденные метры в инпут добавления новой точки
-
+        // отрисовываем статус текущего заезда в хедере
         const statusText = `${telemetry.route.location} • ${telemetry.route.name} • ${Math.round(telemetry.stage.distance)}м`;
 
         if (dom.header.status.innerText !== statusText) {
             dom.header.status.innerText = statusText;
         };
 
+        // отрисовываем пройденную дистанцию в окне ввода дистанции для создания новой точки
+        dom.main.editor.waypoint.new.distance.value = telemetry.stage.distance;
+
+        // добавляем команды в плейлист для озвучки
         if (telemetry.commands.length > 0) {
             console.log(telemetry.stage.distance, JSON.stringify(telemetry.commands));
             app.audio.playlist = app.audio.playlist.concat(telemetry.commands);

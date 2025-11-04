@@ -38,7 +38,7 @@
                     <div class="name">Озвучка</div>
                     <div class="row">
                         <input-select id="settingVoice"></input-select>
-                        <button>
+                        <button title="Прослушать озвучку">
                             <img src="./assets/images/volume.svg">
                         </button>
                     </div>
@@ -65,7 +65,7 @@
                         </div>
                         <div class="block">
                             <div class="name">Спецучастки</div>
-                            <list-select id="editorRouteList" placeholder="Выберите локацию"></list-select>
+                            <list-select id="editorRoutes" placeholder="Выберите локацию"></list-select>
                         </div>
                         <div class="block">
                             <div class="row">
@@ -80,13 +80,13 @@
                         <div class="block">
                             <div class="name">Новая путевая точка</div>
                             <div class="row">
-                                <input id="editorNewWaypointDistance" type="number" value="0">
-                                <button id="editorCreateWaypoint">Создать точку</button>
+                                <input id="editorNewWaypointDistance" type="number" value="0" title="Горячая клавиша для фокуса ввода: Space">
+                                <button id="editorNewWaypointCreate" title="Горячая клавиша: Enter">Создать точку</button>
                             </div>
                         </div>
                         <div class="block">
                             <div class="name">Путевые точки</div>
-                            <list-select id="editorWaypointList" placeholder="Выберите спецучасток"></list-select>
+                            <list-select id="editorWaypoints" placeholder="Выберите спецучасток"></list-select>
                         </div>
                     </div>
                     <div class="divider"></div>
@@ -95,18 +95,18 @@
                             <div class="name">Выбранная путевая точка</div>
                             <div class="row">
                                 <input id="editorSelectedWaypointDistance" type="number" value="0">
-                                <button id="editorDeleteWaypoint">Удалить точку</button>
+                                <button id="editorSelectedWaypointDelete" title="Горячая клавиша: Delete">Удалить точку</button>
                             </div>
                         </div>
                         <div class="row">
                             <div class="block">
                                 <div class="name">Выбранные команды</div>
-                                <list-select id="editorWaypointCommandList" placeholder="Выберите точку"></list-select>
+                                <list-click id="editorSelectedWaypointCommands" placeholder="Выберите точку"></list-click>
                             </div>
                             <div class="block">
                                 <div class="name">Все команды</div>
                                 <input id="editorAllCommandSearch" type="text" placeholder="Поиск...">
-                                <list-select id="editorAllCommandList"></list-select>
+                                <list-click id="editorAllCommands"></list-click>
                             </div>
                         </div>
                     </div>

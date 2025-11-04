@@ -17,17 +17,15 @@ export function init(host) {
         item.innerHTML = content;
 
         item.addEventListener(`click`, function() {
-            for (const item of host.querySelectorAll(`.item`)) {
-                item.removeAttribute(`selected`);
-            };
-
-            this.setAttribute(`selected`, ``);
-
             host.value = this.getAttribute(`value`);
-            host.dispatchEvent(new Event(`change`, { bubbles: true }));
+            host.dispatchEvent(new Event(`change`, { bubbles: false }));
         });
 
         host.appendChild(item);
+    };
+
+    host.searchItems = function(string) {
+        console.log(string);  
     };
 
     host.removeItems = function() {

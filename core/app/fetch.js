@@ -15,8 +15,6 @@ module.exports = async function(url, parse = `json`, options = {}, retries = 3) 
                 signal: controller.signal
             });
 
-            clearTimeout(timeout);
-
             if (!response.ok) {
                 appLog(`Не удалось получить ответ. Путь: "${url}". Статус: ${response.status}.`);
                 return false;
@@ -36,8 +34,6 @@ module.exports = async function(url, parse = `json`, options = {}, retries = 3) 
 
             return null;
         } catch (error) {
-            clearTimeout(timeout);
-
             appLog(`Ошибка при выполнении запроса. Путь: "${url}". Ошибка: ${error.name}: ${error.message}.${error.cause?.code ? ` Код: ${error.cause.code}.` : ``} Попытка: ${attempt}/${retries}.`);
 
             if (attempt === retries) {
@@ -47,6 +43,8 @@ module.exports = async function(url, parse = `json`, options = {}, retries = 3) 
             await new Promise(function(resolve) {
                 return setTimeout(resolve, 1000);
             });
+        } finally {
+            clearTimeout(timeout);
         };
     };
 };
