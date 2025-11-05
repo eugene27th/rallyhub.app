@@ -69,6 +69,16 @@ const dom = {
 };
 
 
+const startupMessages = {
+    majorUpdate: `Вышло крупное обновление, которое нельзя обновить автоматически.<br>Удалите текущее приложение и загрузите новое с сайта.`,
+    networkError: `Не удалось подключиться к серверу.<br>Проверьте интернет-соединение и попробуйте снова.`,
+    fileSystemError: `Не удалось получить доступ к файлам.<br>Проверьте права доступа или место на диске.`,
+    updateError: `Не удалось завершить обновление.<br>Попробуйте выполнить обновление позже.`,
+    startupError: `Произошла ошибка при запуске.<br>Попробуйте перезапустить приложение.`,
+    unknownError: `Произошла неизвестная ошибка при запуске.<br>Попробуйте перезапустить приложение.`
+};
+
+
 const registerComponent = async function(name) {
     if (customElements.get(name)) {
         return;
@@ -183,33 +193,8 @@ window.electronAPI.onStartupStatus(async function(code) {
     if (code !== `appReady`) {
         dom.main.preloader.img.classList.add(`broken`);
         dom.main.preloader.img.style.animationPlayState = `paused`;
+        dom.main.preloader.message.innerHTML = startupMessages[code] || startupMessages.unknownError;
 
-        if (code === `majorUpdate`) {
-            dom.main.preloader.message.innerHTML = `Вышло крупное обновление, которое нельзя обновить автоматически.<br>Удалите текущее приложение и загрузите новое с сайта.`;
-            return false;
-        };
-
-        if (code === `networkError`) {
-            dom.main.preloader.message.innerHTML = `Не удалось подключиться к серверу.<br>Проверьте интернет-соединение и попробуйте снова.`;
-            return false;
-        };
-
-        if (code === `fileSystemError`) {
-            dom.main.preloader.message.innerHTML = `Не удалось получить доступ к файлам.<br>Проверьте права доступа или место на диске.`;
-            return false;
-        };
-
-        if (code === `updateError`) {
-            dom.main.preloader.message.innerHTML = `Не удалось завершить обновление.<br>Попробуйте выполнить обновление позже.`;
-            return false;
-        };
-
-        if (code === `startupError`) {
-            dom.main.preloader.message.innerHTML = `Произошла ошибка при запуске.<br>Попробуйте перезапустить приложение.`;
-            return false;
-        };
-
-        dom.main.preloader.message.innerHTML = `Произошла неизвестная ошибка при запуске.<br>Попробуйте перезапустить приложение.`;
         return false;
     };
 
