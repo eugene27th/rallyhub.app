@@ -1,7 +1,5 @@
 export function init(host) {
-    if (host.hasAttribute(`placeholder`)) {
-        host.innerHTML = `<div class="placeholder">${host.getAttribute(`placeholder`)}</div>`;
-    };
+    const placeholderAttributeValue = host.hasAttribute(`placeholder`) ? host.getAttribute(`placeholder`) : null;
 
     host.addItem = function(value, content) {
         const placeholder = host.querySelector(`.placeholder`);
@@ -31,12 +29,11 @@ export function init(host) {
     };
 
     host.removeItems = function() {
-        if (host.hasAttribute(`placeholder`)) {
-            host.innerHTML = `<div class="placeholder">${host.getAttribute(`placeholder`)}</div>`;
-        } else {
-            host.innerHTML = ``;
-        };
-
+        host.innerHTML = placeholderAttributeValue ? `<div class="placeholder">${placeholderAttributeValue}</div>` : ``;
         host.value = null;
+    };
+
+    if (placeholderAttributeValue) {
+        host.innerHTML = `<div class="placeholder">${placeholderAttributeValue}</div>`;
     };
 };

@@ -1,7 +1,10 @@
 export function init(host) {
-    host.addOption = function(value, name, selected = false) {
-        const displayName = host.querySelector(`.display .name`);
+    const displayName = host.querySelector(`.display .name`);
+    const displayAttributeValue = host.hasAttribute(`display`) ? host.getAttribute(`display`) : null;
 
+    const optionsContainer = host.querySelector(`.options`);
+
+    host.addOption = function(value, name, selected = false) {
         const option = document.createElement(`div`);
 
         option.classList.add(`option`);
@@ -9,27 +12,29 @@ export function init(host) {
         option.innerText = name;
 
         if (selected) {
-            option.setAttribute(`selected`, ``);
             displayName.innerText = name;
             host.value = value;
+
+            option.setAttribute(`selected`, ``);
         };
 
         option.addEventListener(`click`, function() {
-            host.removeAttribute(`opened`);
             displayName.innerText = this.innerText;
             host.value = this.getAttribute(`value`);
+
+            host.removeAttribute(`opened`);
             host.dispatchEvent(new Event(`change`, { bubbles: true }));
         });
 
-        host.querySelector(`.options`).appendChild(option);
-    };
-
-    host.setDisplayName = function(name) {
-        host.querySelector(`.display .name`).innerText = name;
+        optionsContainer.appendChild(option);
     };
 
     host.removeOptions = function() {
-        host.querySelector(`.options`).innerHTML = ``;
+        if (displayAttributeValue) {
+            displayName.innerText = displayAttributeValue;
+        };
+
+        optionsContainer.innerHTML = ``;
         host.value = null;
     };
 
@@ -47,4 +52,8 @@ export function init(host) {
             host.removeAttribute(`opened`);
         };
     });
+
+    if (displayAttributeValue) {
+        displayName.innerText = displayAttributeValue;
+    };
 };

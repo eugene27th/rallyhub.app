@@ -57,6 +57,8 @@ module.exports = function() {
         };
     };
 
+    // todo: валидация конфига
+
     try {
         globalThis.app.path.documents = require(`child_process`).execSync(`powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Environment]::GetFolderPath('MyDocuments')"`, { encoding: `utf8` }).trim();
         appLog(`Получен путь директории "Documents" из реестра Windows: "${globalThis.app.path.documents}".`);

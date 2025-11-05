@@ -29,6 +29,11 @@ const dom = {
         }
     },
     main: {
+        preloader: {
+            root: document.querySelector(`.preloader`),
+            img: document.querySelector(`.preloader .center svg`),
+            message: document.querySelector(`.preloader .center .message`)
+        },
         settings: {
             game: document.getElementById(`settingGame`),
             voice: document.getElementById(`settingVoice`),
@@ -172,38 +177,47 @@ window.electronAPI.onStartupStatus(async function(code) {
     });
 
 
-    // работа с внеплановыми кодами
+    // работа с кодами запуска и прелоадером
     console.log(code);
 
     if (code !== `appReady`) {
+        dom.main.preloader.img.classList.add(`broken`);
+        dom.main.preloader.img.style.animationPlayState = `paused`;
+
         if (code === `majorUpdate`) {
-            // открываем экран ручного обновления
+            dom.main.preloader.message.innerHTML = `Вышло крупное обновление, которое нельзя обновить автоматически.<br>Удалите текущее приложение и загрузите новое с сайта.`;
             return false;
         };
 
         if (code === `networkError`) {
-            // открываем экран ошибки с соответствующей причиной
+            dom.main.preloader.message.innerHTML = `Не удалось подключиться к серверу.<br>Проверьте интернет-соединение и попробуйте снова.`;
             return false;
         };
 
         if (code === `fileSystemError`) {
-            // открываем экран ошибки с соответствующей причиной
+            dom.main.preloader.message.innerHTML = `Не удалось получить доступ к файлам.<br>Проверьте права доступа или место на диске.`;
             return false;
         };
 
         if (code === `updateError`) {
-            // открываем экран ошибки с соответствующей причиной
+            dom.main.preloader.message.innerHTML = `Не удалось завершить обновление.<br>Попробуйте выполнить обновление позже.`;
             return false;
         };
 
         if (code === `startupError`) {
-            // открываем экран ошибки с соответствующей причиной
+            dom.main.preloader.message.innerHTML = `Произошла ошибка при запуске.<br>Попробуйте перезапустить приложение.`;
             return false;
         };
 
-        // открываем экран ошибки без указания причины
+        dom.main.preloader.message.innerHTML = `Произошла неизвестная ошибка при запуске.<br>Попробуйте перезапустить приложение.`;
         return false;
     };
+
+    dom.main.preloader.root.style.opacity = `0`;
+
+    setTimeout(function() {
+        dom.main.preloader.root.remove();
+    }, 250);
 
 
     // нода приложения готова, настраиваем окно
@@ -217,14 +231,16 @@ window.electronAPI.onStartupStatus(async function(code) {
         dom.main.settings.game.addOption(game[0], game[1], game[0] === app.data.config.game);
     };
 
-    dom.main.settings.rate.setValue(app.data.config.rate);
-    dom.main.settings.volume.setValue(app.data.config.volume);
-
     for (const voice of app.data.voices) {
         dom.main.settings.voice.addOption(voice.id, voice.name, voice.id === app.data.config.voice);
     };
 
     app.audio.voice = app.data.voices[app.data.voices.findIndex(function(i) { return i.id === app.data.config.voice })];
+
+    dom.main.settings.rate.setValue(app.data.config.rate);
+    dom.main.settings.volume.setValue(app.data.config.volume);
+
+    // todo: заполнение локаций
 
     for (const command of app.data.commands) {
         if (!command.special) {
@@ -249,13 +265,9 @@ window.electronAPI.onStartupStatus(async function(code) {
         dom.main.editor.waypoint.selected.commands.removeItems();
         dom.main.editor.waypoint.selected.distance.value = 0;
 
-        dom.main.editor.locations.setDisplayName(`Выберите локацию`);
-
         for (const location of locations.values()) {
             dom.main.editor.locations.addOption(location, location);
         };
-
-        console.log(`выбрана игра: ${this.value}`);
     });
 
     dom.main.editor.locations.addEventListener(`change`, function() {
@@ -269,8 +281,6 @@ window.electronAPI.onStartupStatus(async function(code) {
                 dom.main.editor.routes.addItem(route.id, route.name);
             };
         };
-
-        console.log(`выбрана локация: ${this.value}`);
     });
 
     dom.main.editor.routes.addEventListener(`change`, function() {
@@ -297,8 +307,6 @@ window.electronAPI.onStartupStatus(async function(code) {
 
             dom.main.editor.waypoints.addItem(waypoint.distance, `<code>${waypoint.distance}</code> <span>${commands}</span>`);
         };
-
-        console.log(`выбран спецучасток: ${app.editor.selected.route.name}`);
     });
 
     dom.main.editor.waypoints.addEventListener(`change`, function() {
@@ -307,12 +315,10 @@ window.electronAPI.onStartupStatus(async function(code) {
         if (app.editor.selected.waypoint.distance === waypointDistance) {
             return;
         };
-        
+
         app.editor.selected.waypoint = app.editor.selected.route.pacenote.find(function(x) {
             return x.distance === waypointDistance;
         });
-
-        console.log(app.editor.selected.waypoint);
 
         dom.main.editor.waypoint.selected.commands.removeItems();
 
@@ -354,7 +360,6 @@ window.electronAPI.onStartupStatus(async function(code) {
 
         // добавляем команды в плейлист для озвучки
         if (telemetry.commands.length > 0) {
-            console.log(telemetry.stage.distance, JSON.stringify(telemetry.commands));
             app.audio.playlist = app.audio.playlist.concat(telemetry.commands);
         };
     });

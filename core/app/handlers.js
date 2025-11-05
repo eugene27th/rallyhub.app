@@ -72,7 +72,7 @@ module.exports = function() {
         return true;
     });
 
-    electronMain.ipcMain.handle(`editorSendRoute`, async function() {
+    electronMain.ipcMain.handle(`editorSuggestRoute`, async function() {
         return await tryFetch(`${globalThis.app.url.api}/route/suggest`, null, {
             method: `POST`,
             headers: {

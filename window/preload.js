@@ -5,7 +5,7 @@ electron.contextBridge.exposeInMainWorld(`electronAPI`, {
     setConfig: function(config) {
         return electron.ipcRenderer.invoke(`setConfig`, config);
     },
-    
+
     getAppData: function() {
         return electron.ipcRenderer.invoke(`getAppData`);
     },
@@ -16,8 +16,8 @@ electron.contextBridge.exposeInMainWorld(`electronAPI`, {
     editorSaveRoute: async function() {
         return await electron.ipcRenderer.invoke(`editorSaveRoute`);
     },
-    editorSendRoute: async function() {
-        return await electron.ipcRenderer.invoke(`editorSendRoute`);
+    editorSuggestRoute: async function() {
+        return await electron.ipcRenderer.invoke(`editorSuggestRoute`);
     },
 
     openExternalLink: async function(url) {
