@@ -187,7 +187,7 @@ window.electronAPI.onStartupStatus(async function(code) {
     });
 
 
-    // работа с кодами запуска и прелоадером
+    // работа с внеплановыми кодами запуска и прелоадером
     console.log(code);
 
     if (code !== `appReady`) {
@@ -197,12 +197,6 @@ window.electronAPI.onStartupStatus(async function(code) {
 
         return false;
     };
-
-    dom.main.preloader.root.style.opacity = `0`;
-
-    setTimeout(function() {
-        dom.main.preloader.root.remove();
-    }, 250);
 
 
     // нода приложения готова, настраиваем окно
@@ -324,7 +318,11 @@ window.electronAPI.onStartupStatus(async function(code) {
 
 
     // окно настроено, удаляем загрузочный экран
+    dom.main.preloader.root.style.opacity = `0`;
 
+    setTimeout(function() {
+        dom.main.preloader.root.remove();
+    }, 250);
 
 
     // запускаем аудио воркер
