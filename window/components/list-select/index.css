@@ -19,9 +19,14 @@ list-select {
         white-space: nowrap;
         cursor: pointer;
 
+        code {
+            font-family: "Consolas", monospace;
+        }
+
         span {
-            margin-left: 4px;
+            margin-left: 3.8px;
             font-size: 12px;
+            letter-spacing: -0.2px;
             color: var(--color-list-item-font-secondary);
             text-overflow: ellipsis;
             overflow: hidden;

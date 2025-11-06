@@ -8,7 +8,6 @@ const fs = require(`fs`);
 const path = require(`path`);
 
 const appLog = require(`./log`);
-const appPrepare = require(`./prepare`);
 const appStartup = require(`./startup`);
 const appHandlers = require(`./handlers`);
 
@@ -16,7 +15,18 @@ const telemetryListen = require(`../telemetry/listen`);
 
 
 electronMain.app.whenReady().then(async function() {
-    appPrepare();
+    globalThis.app = {
+        url: {},
+        path: {},
+        data: {},
+        telemetry: {}
+    };
+
+    globalThis.app.path.root = electronMain.app.isPackaged ? path.dirname(process.resourcesPath) : electronMain.app.getAppPath();
+    globalThis.app.path.resources = electronMain.app.getAppPath();
+    globalThis.app.path.log = path.join(globalThis.app.path.root, `app.log`);
+    globalThis.app.path.config = path.join(globalThis.app.path.root, `config.json`);
+    globalThis.app.path.asar = path.join(globalThis.app.path.root, `resources`, `app.asar`);
 
     globalThis.app.window = new electronMain.BrowserWindow({
         width: 1200,
@@ -81,7 +91,7 @@ electronMain.app.whenReady().then(async function() {
         try {
             fs.writeFileSync(globalThis.app.path.config, JSON.stringify(globalThis.app.config, null, 4));
         } catch (error) {
-            appLog(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
+            appLog(`Ошибка при записи конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
         };
 
         electronMain.app.quit();

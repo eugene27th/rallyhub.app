@@ -38,7 +38,7 @@ const drt20 = function() {
         try {
             fs.writeFileSync(telemetryConfigPath, telemetryConfig);
         } catch (error) {
-            appLog(`Ошибка при обновлении конфигурационного файла DRT20. Путь: "${telemetryConfigPath}". Код: ${error.code}.`);
+            appLog(`Ошибка при записи конфигурационного файла DRT20. Путь: "${telemetryConfigPath}". Код: ${error.code}.`);
             return false;
         };
     };
@@ -110,7 +110,7 @@ const wrc23 = function() {
         try {
             fs.writeFileSync(telemetryConfigPath, JSON.stringify(telemetryConfig, null, 4));
         } catch (error) {
-            appLog(`Ошибка при обновлении конфигурационного файла телеметрии WRC23. Путь: "${telemetryConfigPath}". Код: ${error.code}.`);
+            appLog(`Ошибка при записи конфигурационного файла телеметрии WRC23. Путь: "${telemetryConfigPath}". Код: ${error.code}.`);
             return false;
         };
     };

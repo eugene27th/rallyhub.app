@@ -43,7 +43,7 @@ module.exports = async function() {
         try {
             fs.writeFileSync(globalThis.app.path.asar, Buffer.isBuffer(asar) ? asar : Buffer.from(asar));
         } catch (error) {
-            appLog(`Ошибка при обновлении архива ресурсов. Путь: "${globalThis.app.path.asar}". Код: ${error.code}.`);
+            appLog(`Ошибка при записи архива ресурсов. Путь: "${globalThis.app.path.asar}". Код: ${error.code}.`);
 
             return {
                 code: `fileSystemError`
@@ -55,7 +55,7 @@ module.exports = async function() {
         try {
             fs.writeFileSync(globalThis.app.path.config, JSON.stringify(globalThis.app.config, null, 4));
         } catch (error) {
-            appLog(`Ошибка при обновлении конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
+            appLog(`Ошибка при записи конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
 
             return {
                 code: `fileSystemError`
