@@ -245,7 +245,10 @@ window.electronAPI.onStartupStatus(async function(code) {
 
 
     // хендлеры
-    dom.main.settings.game.addEventListener(`change`, function() {
+    dom.main.settings.game.addEventListener(`change`, async function() {
+        app.data.config.game = this.value;
+        await window.electronAPI.setConfig(app.data.config);
+
         dom.main.editor.locations.removeOptions();
         dom.main.editor.routes.removeItems();
         dom.main.editor.waypoints.removeItems();
@@ -255,6 +258,15 @@ window.electronAPI.onStartupStatus(async function(code) {
         for (const location of getLocationsByGame(this.value)) {
             dom.main.editor.locations.addOption(location, location);
         };
+    });
+
+    dom.main.settings.voice.addEventListener(`change`, async function() {
+        const id = parseInt(this.value);
+
+        app.data.config.voice = id;
+        await window.electronAPI.setConfig(app.data.config);
+
+        app.audio.voice = app.data.voices[app.data.voices.findIndex(function(i) { return i.id === id })];
     });
 
     dom.main.settings.listen.addEventListener(`click`, async function() {
@@ -272,6 +284,16 @@ window.electronAPI.onStartupStatus(async function(code) {
         } catch (error) {
             return;
         };
+    });
+
+    dom.main.settings.rate.addEventListener(`input`, async function() {
+        app.data.config.rate = parseInt(this.value);
+        await window.electronAPI.setConfig(app.data.config);
+    });
+
+    dom.main.settings.volume.addEventListener(`input`, async function() {
+        app.data.config.volume = parseInt(this.value);
+        await window.electronAPI.setConfig(app.data.config);
     });
 
     dom.main.editor.locations.addEventListener(`change`, function() {

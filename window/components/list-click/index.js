@@ -23,7 +23,20 @@ export function init(host) {
     };
 
     host.searchItems = function(string) {
-        console.log(string);
+        const items = host.querySelectorAll(`.item`);
+        const value = string.trim().toLowerCase();
+
+        if (value.length < 1) {
+            for (const item of items) {
+                item.style.display = `flex`;
+            };
+
+            return;
+        };
+
+        for (const item of items) {
+            item.style.display = item.innerText.toLowerCase().includes(value) ? `flex` : `none`;
+        };
     };
 
     host.removeItems = function() {
