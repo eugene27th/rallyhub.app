@@ -20,10 +20,10 @@ const defaultConfig = {
 
 module.exports = async function() {
     try {
-        fs.accessSync(globalThis.app.path.root, fs.constants.W_OK);
+        fs.accessSync(globalThis.app.path.root, fs.constants.W_OK | fs.constants.R_OK);
     } catch (error) {
         appLog(`Нет прав доступа к корневой директории приложения. Ошибка: ${error.name}: ${error.message}.`);
-        
+
         return {
             code: `fileSystemError`
         };
@@ -36,7 +36,7 @@ module.exports = async function() {
 
         fs.appendFileSync(globalThis.app.path.log, `\n`);
     } catch (error) {
-        appLog(`Ошибка при чтении/записи лог файла приложения. Ошибка: ${error.name}: ${error.message}.`);
+        appLog(`Ошибка при чтении/записи лог файла приложения. Ошибка: ${error.name}: ${error.message}. Код: ${error.code}.`);
 
         return {
             code: `fileSystemError`
@@ -61,11 +61,10 @@ module.exports = async function() {
         if (globalThis.app.config[key] === undefined) {
             appLog(`Не найден необходимый ключ "${key}" в конфигурационном файле приложения. Возвращена конфигурация по-умолчанию.`);
             globalThis.app.config = defaultConfig;
+            break;
         };
     };
 
-    // todo: валидация конфига
-    
     try {
         globalThis.app.path.documents = require(`child_process`).execSync(`powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Environment]::GetFolderPath('MyDocuments')"`, { encoding: `utf8` }).trim();
         appLog(`Получен путь директории "Documents" из реестра Windows: "${globalThis.app.path.documents}".`);

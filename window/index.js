@@ -37,6 +37,7 @@ const dom = {
         settings: {
             game: document.getElementById(`settingGame`),
             voice: document.getElementById(`settingVoice`),
+            listen: document.getElementById(`listenVoice`),
             rate: document.getElementById(`settingRate`),
             volume: document.getElementById(`settingVolume`)
         },
@@ -157,15 +158,28 @@ const audioWorker = async function() {
             continue;
         };
 
-        const command = app.audio.playlist.shift();
-        await playCommand(command);
-    }
+        if (!app.audio.playing) {
+            await playCommand(app.audio.playlist.shift());
+        };
+    };
 };
 
 const getCommandName = function(command) {
     return (app.data.commands.find(function(i) {
         return i.key === command;
     })).name;
+};
+
+const getLocationsByGame = function(game) {
+    const locations = [];
+
+    for (const route of app.data.routes) {
+        if (game === route.game.code && !locations.includes(route.location)) {
+            locations.push(route.location);
+        };
+    };
+
+    return locations;
 };
 
 
@@ -219,7 +233,9 @@ window.electronAPI.onStartupStatus(async function(code) {
     dom.main.settings.rate.setValue(app.data.config.rate);
     dom.main.settings.volume.setValue(app.data.config.volume);
 
-    // todo: заполнение локаций
+    for (const location of getLocationsByGame(app.data.config.game)) {
+        dom.main.editor.locations.addOption(location, location);
+    };
 
     for (const command of app.data.commands) {
         if (!command.special) {
@@ -230,22 +246,31 @@ window.electronAPI.onStartupStatus(async function(code) {
 
     // хендлеры
     dom.main.settings.game.addEventListener(`change`, function() {
-        const locations = new Set();
-
-        for (const route of app.data.routes) {
-            if (route.game.code === this.value) {
-                locations.add(route.location);
-            };
-        };
-
         dom.main.editor.locations.removeOptions();
         dom.main.editor.routes.removeItems();
         dom.main.editor.waypoints.removeItems();
         dom.main.editor.waypoint.selected.commands.removeItems();
         dom.main.editor.waypoint.selected.distance.value = 0;
 
-        for (const location of locations.values()) {
+        for (const location of getLocationsByGame(this.value)) {
             dom.main.editor.locations.addOption(location, location);
+        };
+    });
+
+    dom.main.settings.listen.addEventListener(`click`, async function() {
+        const commands = Object.keys(app.audio.voice.commands);
+        const randomCommand = commands[Math.floor(Math.random() * commands.length)];
+
+        app.audio.element.src = `data:audio/webm;base64,${app.audio.voice.commands[randomCommand]}`;
+        app.audio.element.load();
+
+        app.audio.element.volume = app.data.config.volume / 100;
+        app.audio.element.playbackRate = app.data.config.rate / 100;
+
+        try {
+            await app.audio.element.play();
+        } catch (error) {
+            return;
         };
     });
 
