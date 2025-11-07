@@ -1,7 +1,7 @@
 export function init(host) {
     const placeholderAttributeValue = host.hasAttribute(`placeholder`) ? host.getAttribute(`placeholder`) : null;
 
-    host.addItem = function(value, content) {
+    host.addItem = function(value, name) {
         const placeholder = host.querySelector(`.placeholder`);
 
         if (placeholder) {
@@ -12,7 +12,7 @@ export function init(host) {
 
         item.classList.add(`item`);
         item.setAttribute(`value`, value);
-        item.innerHTML = content;
+        item.innerText = name;
 
         item.addEventListener(`click`, function() {
             host.value = this.getAttribute(`value`);

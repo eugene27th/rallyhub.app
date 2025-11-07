@@ -1,6 +1,6 @@
 @font-face {
-    font-family: "Inter";
-    src: url("./assets/fonts/inter.woff2") format("woff2");
+    font-family: "Roboto";
+    src: url("./assets/fonts/roboto.woff2") format("woff2");
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;
@@ -66,9 +66,8 @@
 
 * {
     box-sizing: border-box;
-    font-family: "Inter", sans-serif;
+    font-family: "Roboto", sans-serif;
     font-style: normal;
-    line-height: 1;
 }
 
 
@@ -150,13 +149,13 @@ header {
         
         flex: 1;
         gap: 40px;
+        font-weight: 300;
+        color: var(--color-main-font-secondary);
 
         .logo {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 300;
-            color: var(--color-main-font-secondary);
 
             .name {
                 font-size: 18px;
@@ -165,8 +164,6 @@ header {
 
         .status {
             font-size: 18px;
-            font-weight: 500;
-            color: var(--color-main-font-secondary);
         }
     }
 
@@ -269,7 +266,6 @@ main {
             gap: 5px;
 
             &>.name {
-                margin-bottom: 2px;
                 font-weight: 500;
             }
         }

@@ -13,8 +13,8 @@ const app = {
     },
     editor: {
         selected: {
-            route: {},
-            waypoint: {}
+            route: null,
+            waypoint: null
         }
     }
 };
@@ -185,8 +185,9 @@ const getLocationsByGame = function(game) {
 
 window.electronAPI.onStartupStatus(async function(code) {
     // регистрируем компоненты
-    await registerComponent(`input-select`);
     await registerComponent(`input-range`);
+    await registerComponent(`input-select`);
+    await registerComponent(`list-drag`);
     await registerComponent(`list-click`);
     await registerComponent(`list-select`);
 
@@ -255,6 +256,9 @@ window.electronAPI.onStartupStatus(async function(code) {
         dom.main.editor.waypoint.selected.commands.removeItems();
         dom.main.editor.waypoint.selected.distance.value = 0;
 
+        app.editor.selected.route = null;
+        app.editor.selected.waypoint = null;
+
         for (const location of getLocationsByGame(this.value)) {
             dom.main.editor.locations.addOption(location, location);
         };
@@ -302,6 +306,9 @@ window.electronAPI.onStartupStatus(async function(code) {
         dom.main.editor.waypoint.selected.commands.removeItems();
         dom.main.editor.waypoint.selected.distance.value = 0;
 
+        app.editor.selected.route = null;
+        app.editor.selected.waypoint = null;
+
         for (const route of app.data.routes) {
             if (route.location === this.value) {
                 dom.main.editor.routes.addItem(route.id, route.name);
@@ -312,7 +319,7 @@ window.electronAPI.onStartupStatus(async function(code) {
     dom.main.editor.routes.addEventListener(`change`, function() {
         const routeId = parseInt(this.value);
 
-        if (app.editor.selected.route.id === routeId) {
+        if (app.editor.selected.route?.id === routeId) {
             return;
         };
 
@@ -324,6 +331,8 @@ window.electronAPI.onStartupStatus(async function(code) {
         dom.main.editor.waypoint.selected.commands.removeItems();
         dom.main.editor.waypoint.selected.distance.value = 0;
 
+        app.editor.selected.waypoint = null;
+
         for (const waypoint of app.editor.selected.route.pacenote) {
             let commands = ``;
 
@@ -331,14 +340,14 @@ window.electronAPI.onStartupStatus(async function(code) {
                 commands += ` - ${getCommandName(commandKey)}`;
             };
 
-            dom.main.editor.waypoints.addItem(waypoint.distance, `<code>${waypoint.distance}</code> <span>${commands}</span>`);
+            dom.main.editor.waypoints.addItem(waypoint.distance, `${waypoint.distance} <span>${commands}</span>`);
         };
     });
 
     dom.main.editor.waypoints.addEventListener(`change`, function() {
         const waypointDistance = parseInt(this.value);
 
-        if (app.editor.selected.waypoint.distance === waypointDistance) {
+        if (app.editor.selected.waypoint?.distance === waypointDistance) {
             return;
         };
 
@@ -349,14 +358,16 @@ window.electronAPI.onStartupStatus(async function(code) {
         dom.main.editor.waypoint.selected.commands.removeItems();
 
         for (const waypointCommand of app.editor.selected.waypoint.commands) {
-            dom.main.editor.waypoint.selected.commands.addItem(app.editor.selected.waypoint.distance, getCommandName(waypointCommand));
+            dom.main.editor.waypoint.selected.commands.addItem(waypointCommand, getCommandName(waypointCommand));
         };
 
         dom.main.editor.waypoint.selected.distance.value = app.editor.selected.waypoint.distance;
     });
 
     dom.main.editor.commands.list.addEventListener(`change`, function() {
-        dom.main.editor.waypoint.selected.commands.addItem(this.value, getCommandName(this.value));
+        if (app.editor.selected.waypoint) {
+            dom.main.editor.waypoint.selected.commands.addItem(this.value, getCommandName(this.value));
+        };
     });
 
     dom.main.editor.commands.search.addEventListener(`input`, function() {
@@ -378,15 +389,17 @@ window.electronAPI.onStartupStatus(async function(code) {
 
     // начинаем слушать телеметрию
     window.electronAPI.onGameTelemetry(function(telemetry) {
+        const currentDistance = telemetry.stage.distance > 0 ? Math.round(telemetry.stage.distance) : 0;
+
         // отрисовываем статус текущего заезда в хедере
-        const statusText = `${telemetry.route.location} • ${telemetry.route.name} • ${Math.round(telemetry.stage.distance)}м`;
+        const statusText = `${telemetry.route.location} • ${telemetry.route.name} • ${currentDistance}м`;
 
         if (dom.header.status.innerText !== statusText) {
             dom.header.status.innerText = statusText;
         };
 
         // отрисовываем пройденную дистанцию в окне ввода дистанции для создания новой точки
-        dom.main.editor.waypoint.new.distance.value = telemetry.stage.distance;
+        dom.main.editor.waypoint.new.distance.value = currentDistance;
 
         // добавляем команды в плейлист для озвучки
         if (telemetry.commands.length > 0) {

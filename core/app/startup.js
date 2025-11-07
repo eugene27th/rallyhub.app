@@ -14,7 +14,7 @@ const defaultConfig = {
     game: `wrc23`,
     voice: 1,
     rate: 100,
-    volume: 70
+    volume: 80
 };
 
 
