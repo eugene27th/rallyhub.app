@@ -26,6 +26,42 @@ const getSafeWaypointDistance = function(distance, prevDistance = null) {
     return distance;
 };
 
+const createWaypoint = function() {
+    if (!globalThis.app.editor.route || waypointNewDistanceInput.value.length < 1) {
+        return;
+    };
+
+    const waypointDistance = getSafeWaypointDistance(parseInt(waypointNewDistanceInput.value));
+
+    waypointNewDistanceInput.value = waypointDistance;
+
+    globalThis.app.editor.waypoint = {
+        distance: waypointDistance,
+        commands: []
+    };
+
+    globalThis.app.editor.route.pacenote.push(globalThis.app.editor.waypoint);
+
+    globalThis.app.editor.route.pacenote.sort(function(a, b) {
+        return a.distance - b.distance;
+    });
+
+    waypointsListComponent.addItem(waypointDistance, null, true);
+};
+
+const deleteWaypoint = function() {
+    if (!globalThis.app.editor.waypoint) {
+        return;
+    };
+
+    waypointsListComponent.removeItem(globalThis.app.editor.waypoint.distance);
+
+    waypointCommandsListComponent.removeItems();
+    waypointCurrentDistanceInput.value = 0;
+
+    globalThis.app.editor.waypoint = null;
+};
+
 
 export const initWaypointsModule = function() {
     waypointsListComponent.addEventListener(`change`, function() {
@@ -49,39 +85,11 @@ export const initWaypointsModule = function() {
     });
 
     waypointCreateButton.addEventListener(`click`, function() {
-        if (!globalThis.app.editor.route || waypointNewDistanceInput.value.length < 1) {
-            return;
-        };
-
-        const waypointDistance = getSafeWaypointDistance(parseInt(waypointNewDistanceInput.value));
-
-        waypointNewDistanceInput.value = waypointDistance;
-
-        globalThis.app.editor.waypoint = {
-            distance: waypointDistance,
-            commands: []
-        };
-
-        globalThis.app.editor.route.pacenote.push(globalThis.app.editor.waypoint);
-
-        globalThis.app.editor.route.pacenote.sort(function(a, b) {
-            return a.distance - b.distance;
-        });
-
-        waypointsListComponent.addItem(waypointDistance, null, true);
+        createWaypoint();
     });
 
     waypointDeleteButton.addEventListener(`click`, function() {
-        if (!globalThis.app.editor.waypoint) {
-            return;
-        };
-
-        waypointsListComponent.removeItem(globalThis.app.editor.waypoint.distance);
-
-        waypointCommandsListComponent.removeItems();
-        waypointCurrentDistanceInput.value = 0;
-
-        globalThis.app.editor.waypoint = null;
+        deleteWaypoint();
     });
 
     waypointCurrentDistanceInput.addEventListener(`input`, function() {
@@ -101,5 +109,15 @@ export const initWaypointsModule = function() {
         });
 
         waypointsListComponent.editItemValue(prevDistance, newDistance);
+    });
+
+    document.addEventListener(`keydown`, function(event) {
+        if (event.code === `Enter`) {
+            createWaypoint();
+        };
+
+        if (event.code === `Delete`) {
+            deleteWaypoint();
+        };
     });
 };
