@@ -1,4 +1,4 @@
-list-select {
+list-all-commands {
     padding-right: 5px;
     display: flex;
     flex-direction: column;
@@ -17,26 +17,12 @@ list-select {
         background-color: var(--color-list-item-background);
         transition: background-color 0.2s;
         white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
         cursor: pointer;
-
-        span {
-            margin-left: 3.8px;
-            font-size: 12px;
-            color: var(--color-list-item-font-secondary);
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
 
         &:hover {
             background-color: var(--color-list-item-background-hover);
-        }
-
-        &[selected] {
-            background-color: var(--color-list-item-background-selected);
-
-            span {
-                color: var(--color-list-item-font);
-            }
         }
     }
 

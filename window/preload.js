@@ -10,14 +10,14 @@ electron.contextBridge.exposeInMainWorld(`electronAPI`, {
         return electron.ipcRenderer.invoke(`getAppData`);
     },
 
-    editorOpenRoute: async function() {
-        return await electron.ipcRenderer.invoke(`editorOpenRoute`);
+    openRoute: async function() {
+        return await electron.ipcRenderer.invoke(`openRoute`);
     },
-    editorSaveRoute: async function() {
-        return await electron.ipcRenderer.invoke(`editorSaveRoute`);
+    saveRoute: async function(route) {
+        return await electron.ipcRenderer.invoke(`saveRoute`, route);
     },
-    editorSuggestRoute: async function() {
-        return await electron.ipcRenderer.invoke(`editorSuggestRoute`);
+    sendRoute: async function(route) {
+        return await electron.ipcRenderer.invoke(`sendRoute`, route);
     },
 
     openExternalLink: async function(url) {

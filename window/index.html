@@ -15,9 +15,9 @@
             <div class="draggable">
                 <div class="logo">
                     <div class="name">RALLYHUB</div>
-                    <div class="version"></div>
+                    <div id="headerVersionElement" class="version"></div>
                 </div>
-                <div class="status"></div>
+                <div id="headerStatusElement" class="status"></div>
             </div>
             <div class="options">
                 <button id="minimizeWindow">
@@ -34,7 +34,7 @@
                     <svg fill="white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                         <path d="M200 0H312l17.2 78.4c15.8 6.5 30.6 15.1 44 25.4l76.5-24.4 56 97-59.4 54.1c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l59.4 54.1-56 97-76.5-24.4c-13.4 10.3-28.2 18.9-44 25.4L312 512H200l-17.2-78.4c-15.8-6.5-30.6-15.1-44-25.4L62.3 432.5l-56-97 59.4-54.1C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L6.3 176.5l56-97 76.5 24.4c13.4-10.3 28.2-18.9 44-25.4L200 0zm56 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z"/>
                     </svg>
-                    <div class="message">Загружаем данные с сервера.<br>Пожалуйста, подождите немного.</div>
+                    <div class="message">Загружаются данные с сервера.<br>Пожалуйста, подождите немного.</div>
                 </div>
                 <div class="bottom">
                     <div>Проблемы с подключением? Сообщите мне об этом!</div>
@@ -44,24 +44,24 @@
             <div class="section settings">
                 <div class="block">
                     <div class="name">Игра</div>
-                    <input-select id="settingGame"></input-select>
+                    <input-select id="gameInputComponent"></input-select>
                 </div>
                 <div class="block">
                     <div class="name">Озвучка</div>
                     <div class="row">
-                        <input-select id="settingVoice"></input-select>
-                        <button id="listenVoice" title="Прослушать озвучку">
+                        <input-select id="voiceInputComponent"></input-select>
+                        <button id="voiceListenButton" title="Прослушать озвучку">
                             <img src="./assets/images/volume.svg">
                         </button>
                     </div>
                 </div>
                 <div class="block">
                     <div class="name">Скорость воспроизведения</div>
-                    <input-range id="settingRate" min="100" max="150" step="1" value="100"></input-range>
+                    <input-range id="playbackRateInputComponent" min="100" max="150" step="1" value="100"></input-range>
                 </div>
                 <div class="block">
                     <div class="name">Громкость</div>
-                    <input-range id="settingVolume" min="0" max="100" step="1" value="50"></input-range>
+                    <input-range id="playbackVolumeInputComponent" min="0" max="100" step="1" value="50"></input-range>
                 </div>
             </div>
             <div class="section editor">
@@ -70,18 +70,18 @@
                     <div class="column">
                         <div class="block">
                             <div class="name">Локация</div>
-                            <input-select id="editorLocations" display="Выберите локацию"></input-select>
+                            <input-select id="locationInputComponent" display="Выберите локацию"></input-select>
                         </div>
                         <div class="block">
                             <div class="name">Спецучастки</div>
-                            <list-select id="editorRoutes" placeholder="Выберите локацию"></list-select>
+                            <list-routes id="routesListComponent" placeholder="Выберите локацию"></list-routes>
                         </div>
                         <div class="block">
                             <div class="row">
-                                <button id="editorOpenRoute">Открыть</button>
-                                <button id="editorSaveRoute">Сохранить</button>
+                                <button id="openRouteButton">Открыть</button>
+                                <button id="saveRouteButton">Сохранить</button>
                             </div>
-                            <button id="editorSuggestRoute">Отправить на сервер</button>
+                            <button id="sendRouteButton">Отправить на сервер</button>
                         </div>
                     </div>
                     <div class="divider"></div>
@@ -89,13 +89,13 @@
                         <div class="block">
                             <div class="name">Новая путевая точка</div>
                             <div class="row">
-                                <input id="editorNewWaypointDistance" type="number" value="0" title="Горячая клавиша для фокуса ввода: Space">
-                                <button id="editorNewWaypointCreate" title="Горячая клавиша: Enter">Создать точку</button>
+                                <input id="waypointNewDistanceInput" type="number" value="0" title="Горячая клавиша для фокуса ввода: Space">
+                                <button id="waypointCreateButton" title="Горячая клавиша: Enter">Создать точку</button>
                             </div>
                         </div>
                         <div class="block">
                             <div class="name">Путевые точки</div>
-                            <list-select id="editorWaypoints" placeholder="Выберите спецучасток"></list-select>
+                            <list-waypoints id="waypointsListComponent" placeholder="Выберите спецучасток"></list-waypoints>
                         </div>
                     </div>
                     <div class="divider"></div>
@@ -103,19 +103,19 @@
                         <div class="block">
                             <div class="name">Выбранная путевая точка</div>
                             <div class="row">
-                                <input id="editorSelectedWaypointDistance" type="number" value="0">
-                                <button id="editorSelectedWaypointDelete" title="Горячая клавиша: Delete">Удалить точку</button>
+                                <input id="waypointCurrentDistanceInput" type="number" value="0">
+                                <button id="waypointDeleteButton" title="Горячая клавиша: Delete">Удалить точку</button>
                             </div>
                         </div>
                         <div class="row">
                             <div class="block">
                                 <div class="name">Выбранные команды</div>
-                                <list-drag id="editorSelectedWaypointCommands" placeholder="Выберите точку"></list-drag>
+                                <list-waypoint-commands id="waypointCommandsListComponent" placeholder="Выберите точку"></list-waypoint-commands>
                             </div>
                             <div class="block">
                                 <div class="name">Все команды</div>
-                                <input id="editorAllCommandSearch" type="text" placeholder="Поиск...">
-                                <list-click id="editorAllCommands"></list-click>
+                                <input id="allCommandsSearchInput" type="text" placeholder="Поиск...">
+                                <list-all-commands id="allCommandsListComponent"></list-all-commands>
                             </div>
                         </div>
                     </div>

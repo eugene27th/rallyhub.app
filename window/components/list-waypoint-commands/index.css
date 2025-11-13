@@ -1,0 +1,70 @@
+list-waypoint-commands {
+    position: relative;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 5px;
+    overflow-y: scroll;
+
+    .item {
+        height: 36px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        border-radius: 2px;
+        color: var(--color-list-item-font);
+        background-color: var(--color-list-item-background);
+        transition: background-color 0.2s;
+        cursor: grab;
+
+        .name {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        img {
+            width: 18px;
+            height: 18px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            cursor: pointer;
+
+            &:hover {
+                opacity: 1;
+            }
+        }
+
+        &:hover {
+            background-color: var(--color-list-item-background-hover);
+        }
+
+        &.drag {
+            position: absolute;
+            width: calc(100% - 5px);
+            background-color: var(--color-list-item-background-selected);
+            cursor: grabbing;
+            opacity: 0.5;
+        }
+
+        &.slot {
+            padding: 0 12px;
+            border: 2px dashed var(--color-list-item-background);
+            background-color: transparent;
+        }
+    }
+
+    .placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        border-radius: 2px;
+        color: var(--color-main-font-secondary);
+        background-color: var(--color-list-placeholder-background);
+    }
+}

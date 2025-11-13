@@ -4,29 +4,35 @@ export function init(host) {
 
     const optionsContainer = host.querySelector(`.options`);
 
-    host.addOption = function(value, name, selected = false) {
+    host.addOption = function(value, name) {
         const option = document.createElement(`div`);
-
         option.classList.add(`option`);
         option.setAttribute(`value`, value);
         option.innerText = name;
-
-        if (selected) {
-            displayName.innerText = name;
-            host.value = value;
-
-            option.setAttribute(`selected`, ``);
-        };
 
         option.addEventListener(`click`, function() {
             displayName.innerText = this.innerText;
             host.value = this.getAttribute(`value`);
 
             host.removeAttribute(`opened`);
-            host.dispatchEvent(new Event(`change`, { bubbles: true }));
+
+            host.dispatchEvent(new Event(`change`, {
+                bubbles: true
+            }));
         });
 
         optionsContainer.appendChild(option);
+    };
+
+    host.selectOption = function(value) {
+        const option = optionsContainer.querySelector(`.option[value="${value}"]`);
+
+        if (!option) {
+            return;
+        };
+
+        displayName.innerText = option.innerText;
+        host.value = value;
     };
 
     host.removeOptions = function() {

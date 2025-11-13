@@ -13,13 +13,27 @@ module.exports = function() {
     });
 
     electronMain.ipcMain.handle(`getAppData`, async function() {
+        const [routes, voices, commands] = await Promise.allSettled([
+            tryFetch(`${globalThis.app.url.api}/routes`),
+            tryFetch(`${globalThis.app.url.api}/voices`),
+            tryFetch(`${globalThis.app.url.api}/commands`)
+        ]);
+
+        if (routes.status !== `fulfilled` || !routes.value || voices.status !== `fulfilled` || !voices.value || commands.status !== `fulfilled` || !commands.value) {
+            return {
+                error: `networkError`
+            };
+        };
+
         return {
             config: globalThis.app.config,
-            ...globalThis.app.data
+            routes: routes.value,
+            voices: voices.value,
+            commands: commands.value
         };
     });
 
-    electronMain.ipcMain.handle(`editorOpenRoute`, async function() {
+    electronMain.ipcMain.handle(`openRoute`, async function() {
         const response = await electronMain.dialog.showOpenDialog(globalThis.app.window, {
             properties: [`openFile`],
             filters: [
@@ -37,6 +51,7 @@ module.exports = function() {
         };
 
         try {
+            // todo: валидация файла
             return JSON.parse(fs.readFileSync(response.filePaths[0]));
         } catch (error) {
             appLog(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
@@ -44,9 +59,9 @@ module.exports = function() {
         };
     });
 
-    electronMain.ipcMain.handle(`editorSaveRoute`, async function() {
+    electronMain.ipcMain.handle(`saveRoute`, async function(event, route) {
         const response = await electronMain.dialog.showSaveDialog(globalThis.app.window, {
-            defaultPath: `${data.location} - ${data.name}.json`,
+            defaultPath: `${route.location} - ${route.name}.json`,
             properties: [`openFile`],
             filters: [
                 {
@@ -63,7 +78,7 @@ module.exports = function() {
         };
 
         try {
-            fs.writeFileSync(response.filePath, JSON.stringify(data, null, 4));
+            fs.writeFileSync(response.filePath, JSON.stringify(route, null, 4));
         } catch (error) {
             appLog(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}". Код: ${error.code}.`);
             return false;
@@ -72,13 +87,13 @@ module.exports = function() {
         return true;
     });
 
-    electronMain.ipcMain.handle(`editorSuggestRoute`, async function() {
+    electronMain.ipcMain.handle(`sendRoute`, async function(event, route) {
         return await tryFetch(`${globalThis.app.url.api}/route/suggest`, null, {
             method: `POST`,
             headers: {
                 [`Content-Type`]: `application/json`
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(route)
         });
     });
 

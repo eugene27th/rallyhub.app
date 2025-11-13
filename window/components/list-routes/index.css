@@ -1,4 +1,4 @@
-list-click {
+list-routes {
     padding-right: 5px;
     display: flex;
     flex-direction: column;
@@ -17,12 +17,18 @@ list-click {
         background-color: var(--color-list-item-background);
         transition: background-color 0.2s;
         white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
         cursor: pointer;
 
         &:hover {
             background-color: var(--color-list-item-background-hover);
+        }
+
+        &.selected {
+            background-color: var(--color-list-item-background-selected);
+
+            span {
+                color: var(--color-list-item-font);
+            }
         }
     }
 

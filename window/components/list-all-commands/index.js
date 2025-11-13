@@ -2,24 +2,26 @@ export function init(host) {
     const placeholderAttributeValue = host.hasAttribute(`placeholder`) ? host.getAttribute(`placeholder`) : null;
 
     host.addItem = function(value, name) {
-        const placeholder = host.querySelector(`.placeholder`);
+        const placeholderElement = host.querySelector(`.placeholder`);
 
-        if (placeholder) {
-            placeholder.remove();
+        if (placeholderElement) {
+            placeholderElement.remove();
         };
 
-        const item = document.createElement(`div`);
+        const itemElement = document.createElement(`div`);
+        itemElement.classList.add(`item`);
+        itemElement.setAttribute(`value`, value);
+        itemElement.innerText = name;
 
-        item.classList.add(`item`);
-        item.setAttribute(`value`, value);
-        item.innerText = name;
-
-        item.addEventListener(`click`, function() {
+        itemElement.addEventListener(`click`, function() {
             host.value = this.getAttribute(`value`);
-            host.dispatchEvent(new Event(`change`, { bubbles: false }));
+            
+            host.dispatchEvent(new Event(`change`, {
+                bubbles: false
+            }));
         });
 
-        host.appendChild(item);
+        host.appendChild(itemElement);
     };
 
     host.searchItems = function(string) {
@@ -37,11 +39,6 @@ export function init(host) {
         for (const item of items) {
             item.style.display = item.innerText.toLowerCase().includes(value) ? `flex` : `none`;
         };
-    };
-
-    host.removeItems = function() {
-        host.innerHTML = placeholderAttributeValue ? `<div class="placeholder">${placeholderAttributeValue}</div>` : ``;
-        host.value = null;
     };
 
     if (placeholderAttributeValue) {

@@ -8,14 +8,19 @@ export function init(host) {
         host.value = value;
         inputElement.value = value;
 
-        host.dispatchEvent(new Event(`input`, { bubbles: true }));
+        host.dispatchEvent(new Event(`input`, {
+            bubbles: true
+        }));
     };
 
     inputElement.addEventListener(`input`, async function() {
         valueElement.innerText = `${this.value}%`;
 
         host.value = this.value;
-        host.dispatchEvent(new Event(`input`, { bubbles: true }));
+
+        host.dispatchEvent(new Event(`input`, {
+            bubbles: true
+        }));
     });
 
     for (const attribute of [`min`, `max`, `step`, `value`]) {

@@ -18,7 +18,6 @@ electronMain.app.whenReady().then(async function() {
     globalThis.app = {
         url: {},
         path: {},
-        data: {},
         telemetry: {}
     };
 

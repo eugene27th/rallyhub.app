@@ -149,13 +149,13 @@ header {
         
         flex: 1;
         gap: 40px;
-        font-weight: 300;
         color: var(--color-main-font-secondary);
 
         .logo {
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 300;
 
             .name {
                 font-size: 18px;
@@ -164,6 +164,7 @@ header {
 
         .status {
             font-size: 18px;
+            font-weight: 600;
         }
     }
 
