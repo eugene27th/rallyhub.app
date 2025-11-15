@@ -67,7 +67,7 @@ input-select {
         }
     }
 
-    &[opened] {
+    &.opened {
         /* &::after {
             content: "";
             position: fixed;

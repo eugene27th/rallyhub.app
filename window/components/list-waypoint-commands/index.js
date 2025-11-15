@@ -5,7 +5,6 @@ export function init(host) {
     host.draggingElementShiftY = 0;
     host.slotElement = null;
 
-
     const onMouseMove = function(event) {
         if (!host.draggingElement) {
             return;
@@ -15,12 +14,12 @@ export function init(host) {
 
         host.draggingElement.style.top = `${event.clientY - host.getBoundingClientRect().top - host.draggingElementShiftY}px`;
 
-        for (const listItem of host.querySelectorAll(`.item:not(.drag)`)) {
-            const elementRect = listItem.getBoundingClientRect();
+        for (const listItemElement of host.querySelectorAll(`.item:not(.drag)`)) {
+            const elementRect = listItemElement.getBoundingClientRect();
             const elementMiddle = elementRect.top + elementRect.height / 2;
 
             if (event.clientY < elementMiddle) {
-                host.insertBefore(host.slotElement, listItem);
+                host.insertBefore(host.slotElement, listItemElement);
                 return;
             };
         };
@@ -48,19 +47,17 @@ export function init(host) {
         updateValue();
     };
 
-
     const updateValue = function() {
         host.value = [];
 
-        for (const item of host.querySelectorAll(`.item`)) {
-            host.value.push(item.getAttribute(`value`));
+        for (const listItemElement of host.querySelectorAll(`.item`)) {
+            host.value.push(listItemElement.getAttribute(`value`));
         };
 
         host.dispatchEvent(new Event(`change`, {
             bubbles: false
         }));
     };
-
 
     host.addItem = function(value, name) {
         const placeholderElement = host.querySelector(`.placeholder`);
@@ -99,7 +96,6 @@ export function init(host) {
         host.keys = null;
     };
 
-
     host.addEventListener(`mousedown`, function(event) {
         if (!event.target.classList.contains(`item`)) {
             return;
@@ -125,7 +121,6 @@ export function init(host) {
         document.addEventListener(`mouseup`, onMouseUp);
     });
 
-    
     if (placeholderAttributeValue) {
         host.innerHTML = `<div class="placeholder">${placeholderAttributeValue}</div>`;
     };

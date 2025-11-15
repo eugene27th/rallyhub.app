@@ -15,7 +15,7 @@ export function init(host) {
 
         itemElement.addEventListener(`click`, function() {
             host.value = this.getAttribute(`value`);
-            
+
             host.dispatchEvent(new Event(`change`, {
                 bubbles: false
             }));
@@ -25,19 +25,19 @@ export function init(host) {
     };
 
     host.searchItems = function(string) {
-        const items = host.querySelectorAll(`.item`);
-        const value = string.trim().toLowerCase();
+        const searchValue = string.trim().toLowerCase();
+        const listItemElements = host.querySelectorAll(`.item`);
 
-        if (value.length < 1) {
-            for (const item of items) {
-                item.style.display = `flex`;
+        if (searchValue.length < 1) {
+            for (const listItemElement of listItemElements) {
+                listItemElement.style.display = `flex`;
             };
 
             return;
         };
 
-        for (const item of items) {
-            item.style.display = item.innerText.toLowerCase().includes(value) ? `flex` : `none`;
+        for (const listItemElement of listItemElements) {
+            listItemElement.style.display = listItemElement.innerText.toLowerCase().includes(searchValue) ? `flex` : `none`;
         };
     };
 

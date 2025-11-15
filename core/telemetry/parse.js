@@ -1,9 +1,9 @@
-const Parser = require(`binary-parser`).Parser;
+const parser = require(`binary-parser`).Parser;
 
 
 const drt20 = function(buffer) {
     try {
-        const parsed = new Parser()
+        const parsed = new parser()
             .floatle(`game_total_time`)
             .floatle(`stage_current_time`)
             .floatle(`stage_current_distance`)
@@ -92,7 +92,7 @@ const drt20 = function(buffer) {
 
 const wrc23 = function(buffer) {
     try {
-        const parsed = new Parser()
+        const parsed = new parser()
             .string(`packet_4cc`, { zeroTerminated: true, length: 4 })
             .doublele(`stage_length`)
             .floatle(`stage_progress`)
@@ -138,7 +138,7 @@ const wrc23 = function(buffer) {
 
 const acr25 = function(buffer) {
     try {
-        const parsed = new Parser()
+        const parsed = new parser()
             .parse(buffer);
 
         // if return

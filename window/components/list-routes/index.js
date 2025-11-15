@@ -14,8 +14,8 @@ export function init(host) {
         itemElement.innerText = name;
 
         itemElement.addEventListener(`click`, function() {
-            for (const listItem of host.querySelectorAll(`.item`)) {
-                listItem.classList.remove(`selected`);
+            for (const listItemElement of host.querySelectorAll(`.item`)) {
+                listItemElement.classList.remove(`selected`);
             };
 
             this.classList.add(`selected`);
@@ -36,8 +36,8 @@ export function init(host) {
             return;
         };
 
-        for (const listItem of host.querySelectorAll(`.item`)) {
-            listItem.classList.remove(`selected`);
+        for (const listItemElement of host.querySelectorAll(`.item`)) {
+            listItemElement.classList.remove(`selected`);
         };
 
         itemElement.classList.add(`selected`);

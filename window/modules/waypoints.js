@@ -59,6 +59,11 @@ const deleteWaypoint = function() {
     waypointCommandsListComponent.removeItems();
     waypointCurrentDistanceInput.value = 0;
 
+    const waypointIndex = globalThis.app.editor.route.pacenote.findIndex(function(i) {
+        return i.distance === globalThis.app.editor.waypoint.distance;
+    });
+
+    globalThis.app.editor.route.pacenote.splice(waypointIndex, 1);
     globalThis.app.editor.waypoint = null;
 };
 

@@ -1,5 +1,6 @@
 const socket = require(`dgram`).createSocket(`udp4`);
 
+const appLog = require(`../app/log`);
 const telemetryParse = require(`./parse`);
 
 
@@ -16,6 +17,16 @@ const start = function() {
         };
 
         globalThis.app.window.webContents.send(`gameTelemetry`, telemetry);
+    });
+
+    socket.on(`listening`, function() {
+        const { address, port } = socket.address();
+        appLog(`Прослушивание сокета: "${address}:${port}".`);
+    });
+
+    socket.on(`error`, function(error) {
+        appLog(`Ошибка прослушивания сокета. Ошибка: ${error.name}: ${error.message}.`);
+        socket.close();
     });
 
     socket.bind(globalThis.app.config.port);

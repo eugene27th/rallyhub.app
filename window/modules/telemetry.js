@@ -113,7 +113,7 @@ export const initTelemetryModule = function() {
                     if (data.state === 1) {
                         commandsToBeVoiced.push(`puncture_${tyre}`);
                     };
-                    
+
                     telemetryStage.vehicle.tyres[tyre].state = data.state;
                 };
             };

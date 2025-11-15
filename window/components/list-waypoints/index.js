@@ -1,10 +1,9 @@
 export function init(host) {
     const placeholderAttributeValue = host.hasAttribute(`placeholder`) ? host.getAttribute(`placeholder`) : null;
 
-    
     const selectItem = function(selectedElement) {
-        for (const listItem of host.querySelectorAll(`.item`)) {
-            listItem.classList.remove(`selected`);
+        for (const listItemElement of host.querySelectorAll(`.item`)) {
+            listItemElement.classList.remove(`selected`);
         };
 
         selectedElement.classList.add(`selected`);
@@ -19,16 +18,15 @@ export function init(host) {
     const repositionItem = function(targetElement) {
         const targetValue = parseInt(targetElement.getAttribute(`value`));
 
-        for (const listItem of host.querySelectorAll(`.item`)) {
-            if (parseInt(listItem.getAttribute(`value`)) > targetValue) {
-                listItem.before(targetElement);
+        for (const listItemElement of host.querySelectorAll(`.item`)) {
+            if (parseInt(listItemElement.getAttribute(`value`)) > targetValue) {
+                listItemElement.before(targetElement);
                 return;
             };
         };
 
         host.append(targetElement);
     };
-
 
     host.addItem = function(value, description, select = false) {
         const placeholderElement = host.querySelector(`.placeholder`);
@@ -40,7 +38,6 @@ export function init(host) {
         const itemElement = document.createElement(`div`);
         itemElement.classList.add(`item`);
         itemElement.setAttribute(`value`, value);
-
         itemElement.innerHTML = `<div class="value">${value}</div><span>${description || ``}</span>`;
 
         itemElement.addEventListener(`click`, function() {
@@ -75,8 +72,7 @@ export function init(host) {
     };
 
     host.editItemDescription = function(value, description) {
-        const itemElement = host.querySelector(`.item[value="${value}"]`);
-        itemElement.querySelector(`span`).innerText = description;
+        host.querySelector(`.item[value="${value}"] span`).innerText = description;
     };
 
     host.removeItem = function(value) {

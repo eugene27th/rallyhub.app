@@ -1,65 +1,62 @@
 export function init(host) {
-    const displayName = host.querySelector(`.display .name`);
+    const displayNameElement = host.querySelector(`.display .name`);
     const displayAttributeValue = host.hasAttribute(`display`) ? host.getAttribute(`display`) : null;
-
-    const optionsContainer = host.querySelector(`.options`);
+    const optionsContainerElement = host.querySelector(`.options`);
 
     host.addOption = function(value, name) {
-        const option = document.createElement(`div`);
-        option.classList.add(`option`);
-        option.setAttribute(`value`, value);
-        option.innerText = name;
+        const optionElement = document.createElement(`div`);
+        optionElement.classList.add(`option`);
+        optionElement.setAttribute(`value`, value);
+        optionElement.innerText = name;
 
-        option.addEventListener(`click`, function() {
-            displayName.innerText = this.innerText;
+        optionElement.addEventListener(`click`, function() {
+            displayNameElement.innerText = this.innerText;
             host.value = this.getAttribute(`value`);
 
-            host.removeAttribute(`opened`);
+            host.classList.remove(`opened`);
 
             host.dispatchEvent(new Event(`change`, {
                 bubbles: true
             }));
         });
 
-        optionsContainer.appendChild(option);
+        optionsContainerElement.appendChild(optionElement);
     };
 
     host.selectOption = function(value) {
-        const option = optionsContainer.querySelector(`.option[value="${value}"]`);
+        const option = optionsContainerElement.querySelector(`.option[value="${value}"]`);
 
         if (!option) {
             return;
         };
 
-        displayName.innerText = option.innerText;
+        displayNameElement.innerText = option.innerText;
         host.value = value;
     };
 
     host.removeOptions = function() {
-        if (displayAttributeValue) {
-            displayName.innerText = displayAttributeValue;
-        };
+        displayNameElement.innerText = displayAttributeValue ? displayAttributeValue : ``;
 
-        optionsContainer.innerHTML = ``;
+        optionsContainerElement.innerHTML = ``;
         host.value = null;
     };
 
     host.querySelector(`.display`).addEventListener(`click`, function() {
-        if (host.getAttribute(`opened`) !== null) {
-            host.removeAttribute(`opened`);
+        if (host.classList.contains(`opened`)) {
+            host.classList.remove(`opened`);
         } else {
-            host.setAttribute(`opened`, ``);
+            host.classList.add(`opened`);
         };
     });
 
     // todo: не нравится дублирование этих листенеров, потом надо подумать
     document.addEventListener(`click`, function(event) {
         if (!host.contains(event.target)) {
-            host.removeAttribute(`opened`);
+            host.classList.remove(`opened`);
         };
     });
 
     if (displayAttributeValue) {
-        displayName.innerText = displayAttributeValue;
+        displayNameElement.innerText = displayAttributeValue;
     };
 };

@@ -64,7 +64,7 @@ export const initRoutesModule = function() {
 
     saveRouteButton.addEventListener(`click`, async function(event) {
         if (!globalThis.app.editor.route) {
-            return;  
+            return;
         };
 
         event.target.disabled = true;
@@ -76,7 +76,7 @@ export const initRoutesModule = function() {
 
     sendRouteButton.addEventListener(`click`, async function(event) {
         if (!globalThis.app.editor.route) {
-            return;  
+            return;
         };
 
         event.target.disabled = true;
