@@ -7,9 +7,9 @@ const waypointNewDistanceInput = document.getElementById(`waypointNewDistanceInp
 let telemetryAwait = false;
 let telemetryRoute = {};
 let telemetryStage = {};
+let telemetryPacenote = {};
 
 const telemetryDefaultStage = {
-    currentDistance: 0,
     completedBriefing: false,
     completedWaypoints: [],
     vehicle: {
@@ -55,6 +55,16 @@ export const initTelemetryModule = function() {
             telemetryAwait = false;
         };
 
+        telemetryPacenote = globalThis.app.editor.route?.game.id === telemetry.stage.id ? globalThis.app.editor.route.pacenote : telemetryRoute.pacenote;
+
+        if (!telemetryPacenote) {
+            return false;
+        };
+
+        if (telemetry.stage.distance <= 0 && telemetryStage.completedWaypoints.length > 1) {
+            telemetryStage = structuredClone(telemetryDefaultStage);
+        };
+
         const currentRoundDistance = telemetry.stage.distance > 0 ? Math.round(telemetry.stage.distance) : 0;
 
         const statusText = `${telemetryRoute.location} • ${telemetryRoute.name} • ${currentRoundDistance}м`;
@@ -65,21 +75,11 @@ export const initTelemetryModule = function() {
 
         waypointNewDistanceInput.value = currentRoundDistance;
 
-        if (!telemetryRoute.pacenote) {
-            return false;
-        };
-
-        if (telemetryStage.currentDistance <= 0 && telemetryStage.completedWaypoints.length > 1) {
-            telemetryStage = structuredClone(telemetryDefaultStage);
-        };
-
-        telemetryStage.currentDistance = telemetry.stage.distance;
-
         let commandsToBeVoiced = [];
 
         if (!telemetryStage.completedBriefing) {
-            if (telemetryStage.currentDistance <= 0) {
-                const briefingWaypoint = telemetryRoute.pacenote.find(function(i) {
+            if (telemetry.stage.distance <= 0) {
+                const briefingWaypoint = telemetryPacenote.find(function(i) {
                     return i.distance === 0;
                 });
 
@@ -92,10 +92,10 @@ export const initTelemetryModule = function() {
             telemetryStage.completedBriefing = true;
         };
 
-        const waypointsToBeVoiced = telemetryRoute.pacenote.filter(function(waypoint) {
+        const waypointsToBeVoiced = telemetryPacenote.filter(function(waypoint) {
             return (
-                waypoint.distance > telemetryStage.currentDistance &&
-                waypoint.distance < (telemetryStage.currentDistance + 2) &&
+                waypoint.distance > telemetry.stage.distance &&
+                waypoint.distance < (telemetry.stage.distance + 2) &&
                 !telemetryStage.completedWaypoints.includes(waypoint.distance)
             );
         });
