@@ -11,8 +11,8 @@ let audioWorkerPlaylist = [];
 
 
 const setVoice = async function(voiceId) {
-    if (globalThis.app.data.config.voice !== voiceId) {
-        globalThis.app.data.config.voice = voiceId;
+    if (globalThis.app.data.config.settingVoice !== voiceId) {
+        globalThis.app.data.config.settingVoice = voiceId;
         await window.electronAPI.setConfig(app.data.config);
     };
 
@@ -26,15 +26,15 @@ const setVoice = async function(voiceId) {
 };
 
 const setPlaybackRate = async function(value) {
-    if (globalThis.app.data.config.rate !== value) {
-        globalThis.app.data.config.rate = value;
+    if (globalThis.app.data.config.settingPlaybackRate !== value) {
+        globalThis.app.data.config.settingPlaybackRate = value;
         await window.electronAPI.setConfig(app.data.config);
     };
 };
 
 const setPlaybackVolume = async function(value) {
-    if (globalThis.app.data.config.volume !== value) {
-        globalThis.app.data.config.volume = value;
+    if (globalThis.app.data.config.settingPlaybackVolume !== value) {
+        globalThis.app.data.config.settingPlaybackVolume = value;
         await window.electronAPI.setConfig(app.data.config);
     };
 };
@@ -44,10 +44,10 @@ const playCommand = async function(command) {
     audioElement.src = `data:audio/webm;base64,${audioWorkerVoice.commands[command]}`;
     audioElement.load();
 
-    audioElement.volume = globalThis.app.data.config.volume / 100;
-    audioElement.playbackRate = globalThis.app.data.config.rate / 100;
+    audioElement.volume = globalThis.app.data.config.settingPlaybackVolume / 100;
+    audioElement.playbackRate = globalThis.app.data.config.settingPlaybackRate / 100;
 
-    if (audioWorkerPlaylist.length > 5 && globalThis.app.data.config.rate < 110) {
+    if (audioWorkerPlaylist.length > 5 && globalThis.app.data.config.settingPlaybackRate < 110) {
         audioElement.playbackRate = 1.1;
     };
 
@@ -76,8 +76,8 @@ const playRandomCommand = async function() {
     audioElement.src = `data:audio/webm;base64,${audioWorkerVoice.commands[randomCommand]}`;
     audioElement.load();
 
-    audioElement.volume = globalThis.app.data.config.volume / 100;
-    audioElement.playbackRate = globalThis.app.data.config.rate / 100;
+    audioElement.volume = globalThis.app.data.config.settingPlaybackVolume / 100;
+    audioElement.playbackRate = globalThis.app.data.config.settingPlaybackRate / 100;
 
     try {
         await audioElement.play();
@@ -113,10 +113,10 @@ export const initAudioModule = async function() {
         voiceInputComponent.addOption(voice.id, voice.name);
     };
 
-    setVoice(globalThis.app.data.config.voice);
+    setVoice(globalThis.app.data.config.settingVoice);
 
-    playbackRateInputComponent.setValue(globalThis.app.data.config.rate);
-    playbackVolumeInputComponent.setValue(globalThis.app.data.config.volume);
+    playbackRateInputComponent.setValue(globalThis.app.data.config.settingPlaybackRate);
+    playbackVolumeInputComponent.setValue(globalThis.app.data.config.settingPlaybackVolume);
 
     voiceInputComponent.addEventListener(`change`, async function() {
         await setVoice(parseInt(this.value));

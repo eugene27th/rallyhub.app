@@ -33,11 +33,11 @@ const telemetryDefaultStage = {
 
 export const initTelemetryModule = function() {
     window.electronAPI.onGameTelemetry(function(telemetry) {
-        if (telemetryRoute.game?.id !== telemetry.stage.id || telemetryRoute.game?.code !== globalThis.app.data.config.game) {
+        if (telemetryRoute.game?.id !== telemetry.stage.id || telemetryRoute.game?.code !== globalThis.app.data.config.settingGame) {
             telemetryAwait = true;
 
             const route = globalThis.app.data.routes.find(function(i) {
-                return i.game.id === telemetry.stage.id && i.game.code === globalThis.app.data.config.game;
+                return i.game.id === telemetry.stage.id && i.game.code === globalThis.app.data.config.settingGame;
             });
 
             if (route) {
@@ -46,7 +46,7 @@ export const initTelemetryModule = function() {
                 telemetryRoute = {
                     game: {
                         id: telemetry.stage.id,
-                        code: globalThis.app.config.game
+                        code: globalThis.app.data.config.settingGame
                     }
                 };
             };

@@ -53,7 +53,7 @@ window.electronAPI.onStartupStatus(async function(code) {
     await registerComponent(`list-all-commands`);
     await registerComponent(`list-waypoint-commands`);
 
-    document.getElementById(`headerVersionElement`).innerText = globalThis.app.data.config.version;
+    document.getElementById(`headerVersionElement`).innerText = globalThis.app.data.config.appVersion;
 
     console.log(globalThis.app.data);
 

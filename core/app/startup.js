@@ -7,13 +7,17 @@ const appUpdate = require(`./update`);
 const telemetrySetup = require(`../telemetry/setup`);
 
 const defaultConfig = {
-    version: `1.1.0`,
-    domain: `rallyhub.ru`,
-    port: 20220,
-    game: `wrc23`,
-    voice: 1,
-    rate: 100,
-    volume: 80
+    appVersion: `1.1.0`,
+    appTelemetryPort: 20220,
+
+    domainApi: `https://api-beta.rallyhub.ru`,
+    domainCdn: `https://cdn.rallyhub.ru`,
+    domainSite: `https://rallyhub.ru`,
+
+    settingGame: `wrc23`,
+    settingVoice: 1,
+    settingPlaybackRate: 100,
+    settingPlaybackVolume: 100
 };
 
 
@@ -71,10 +75,6 @@ module.exports = async function() {
         globalThis.app.path.documents = path.join(process.env.USERPROFILE, `Documents`);
         appLog(`Путь директории "Documents" не найден в реестре Windows, либо был выключен PowerShell. Путь получен из среды выполнения: "${globalThis.app.path.documents}".`);
     };
-
-    globalThis.app.url.api = `http://api-beta.rallyhub.ru`;
-    globalThis.app.url.cdn = `https://cdn.${globalThis.app.config.domain}`;
-    globalThis.app.url.site = `https://rallyhub.ru`;
 
     let updateStatus;
 

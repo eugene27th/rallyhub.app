@@ -7,7 +7,7 @@ const tryFetch = require(`./fetch`);
 module.exports = async function() {
     appLog(`Проверка версии приложения.`);
 
-    const latestVersion = await tryFetch(`${globalThis.app.url.api}/client/version`, `text`);
+    const latestVersion = await tryFetch(`${globalThis.app.config.domainApi}/client/version`, `text`);
 
     if (!latestVersion) {
         return {
@@ -16,21 +16,21 @@ module.exports = async function() {
     };
 
     const latestMajorVersion = parseInt(latestVersion.split(`.`)[0]);
-    const currentMajorVersion = parseInt(globalThis.app.config.version.split(`.`)[0]);
+    const currentMajorVersion = parseInt(globalThis.app.config.appVersion.split(`.`)[0]);
     const electronMajorVersion = parseInt(process.versions.electron.split(`.`)[0]);
 
     if (currentMajorVersion < latestMajorVersion || electronMajorVersion < 34) {
-        appLog(`Мажорная версия приложения/electron не совпадает с актуальной. Требуется ручная переустановка. Удалите текущее приложение и скачайте новое на сайте: "${globalThis.app.url.site}".`);
+        appLog(`Мажорная версия приложения/electron не совпадает с актуальной. Требуется ручная переустановка. Удалите текущее приложение и скачайте новое на сайте: "${globalThis.app.config.domainSite}".`);
 
         return {
             code: `majorUpdate`
         };
     };
 
-    if (globalThis.app.config.version !== latestVersion) {
-        appLog(`Текущая версия приложения не совпадает с актуальной. Обновление приложения ("${globalThis.app.config.version}" > "${latestVersion}").`);
+    if (globalThis.app.config.appVersion !== latestVersion) {
+        appLog(`Текущая версия приложения не совпадает с актуальной. Обновление приложения ("${globalThis.app.config.appVersion}" > "${latestVersion}").`);
 
-        const asar = await tryFetch(`${globalThis.app.url.cdn}/app.asar`, `buffer`);
+        const asar = await tryFetch(`${globalThis.app.config.domainCdn}/app.asar`, `buffer`);
 
         if (!asar) {
             // todo: проверять целостность архива (хеш и размер)
@@ -50,7 +50,7 @@ module.exports = async function() {
             };
         };
 
-        globalThis.app.config.version = latestVersion;
+        globalThis.app.config.appVersion = latestVersion;
 
         try {
             fs.writeFileSync(globalThis.app.path.config, JSON.stringify(globalThis.app.config, null, 4));

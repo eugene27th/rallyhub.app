@@ -21,7 +21,7 @@ const drt20 = function() {
         return false;
     };
 
-    if (telemetryConfig.search(`<udp enabled="true" extradata="3" port="${globalThis.app.config.port}" delay="1" ip="127.0.0.1" />`) < 0) {
+    if (telemetryConfig.search(`<udp enabled="true" extradata="3" port="${globalThis.app.config.appTelemetryPort}" delay="1" ip="127.0.0.1" />`) < 0) {
         appLog(`Обновление конфигурационного файла "DiRT Rally 2.0".`);
 
         try {
@@ -33,7 +33,7 @@ const drt20 = function() {
 
         const searchIndex = telemetryConfig.search(`</motion_platform>`);
 
-        telemetryConfig = `${telemetryConfig.slice(0, searchIndex)}\t<udp enabled="true" extradata="3" port="${globalThis.app.config.port}" delay="1" ip="127.0.0.1" />\n\t${telemetryConfig.slice(searchIndex)}`;
+        telemetryConfig = `${telemetryConfig.slice(0, searchIndex)}\t<udp enabled="true" extradata="3" port="${globalThis.app.config.appTelemetryPort}" delay="1" ip="127.0.0.1" />\n\t${telemetryConfig.slice(searchIndex)}`;
 
         try {
             fs.writeFileSync(telemetryConfigPath, telemetryConfig);
@@ -61,7 +61,7 @@ const wrc23 = function() {
         structure: `rallyhub`,
         packet: `session_update`,
         ip: `127.0.0.1`,
-        port: globalThis.app.config.port,
+        port: globalThis.app.config.appTelemetryPort,
         frequencyHz: 30,
         bEnabled: true
     };
@@ -74,7 +74,7 @@ const wrc23 = function() {
     };
 
     const duplicatedPortPacket = telemetryConfig.udp.packets.find(function(i) {
-        return i.port === globalThis.app.config.port && i.structure !== `rallyhub`;
+        return i.port === globalThis.app.config.appTelemetryPort && i.structure !== `rallyhub`;
     });
 
     if (duplicatedPortPacket) {
@@ -90,7 +90,7 @@ const wrc23 = function() {
 
         telemetryConfig.udp.packets.push(defaultTelemetryConfig);
         telemetryConfigNeedUpdate = true;
-    } else if (telemetryConfig.udp.packets[existPacketIndex].port !== globalThis.app.config.port) {
+    } else if (telemetryConfig.udp.packets[existPacketIndex].port !== globalThis.app.config.appTelemetryPort) {
         appLog(`Перезапись пакета в конфигурационном файле телеметрии "EA SPORTS WRC".`);
 
         telemetryConfig.udp.packets[existPacketIndex] = defaultTelemetryConfig;

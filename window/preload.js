@@ -16,8 +16,8 @@ electron.contextBridge.exposeInMainWorld(`electronAPI`, {
     saveRoute: async function(route) {
         return await electron.ipcRenderer.invoke(`saveRoute`, route);
     },
-    sendRoute: async function(route) {
-        return await electron.ipcRenderer.invoke(`sendRoute`, route);
+    sendRoute: async function(data) {
+        return await electron.ipcRenderer.invoke(`sendRoute`, data);
     },
 
     openExternalLink: async function(url) {

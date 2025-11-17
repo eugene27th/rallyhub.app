@@ -82,7 +82,15 @@ export const initRoutesModule = function() {
         event.target.disabled = true;
 
         event.target.innerText = `Отправка...`;
-        event.target.innerText = await window.electronAPI.sendRoute(globalThis.app.editor.route) !== false ? `Отправлено` : `Ошибка`;
+
+        const responseStatus = await window.electronAPI.sendRoute({
+            route: {
+                id: globalThis.app.editor.route.id
+            },
+            pacenote: globalThis.app.editor.route.pacenote
+        });
+
+        event.target.innerText = responseStatus !== false ? `Отправлено` : `Ошибка`;
 
         setTimeout(function() {
             event.target.disabled = false;

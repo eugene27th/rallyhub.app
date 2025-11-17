@@ -6,11 +6,11 @@ const telemetryParse = require(`./parse`);
 
 const start = function() {
     socket.on(`message`, function(message) {
-        if (!telemetryParse[globalThis.app.config.game] || globalThis.app.telemetry.await) {
+        if (!telemetryParse[globalThis.app.config.settingGame] || globalThis.app.telemetry.await) {
             return false;
         };
 
-        const telemetry = telemetryParse[globalThis.app.config.game](message);
+        const telemetry = telemetryParse[globalThis.app.config.settingGame](message);
 
         if (!telemetry) {
             return false;
@@ -29,7 +29,7 @@ const start = function() {
         socket.close();
     });
 
-    socket.bind(globalThis.app.config.port);
+    socket.bind(globalThis.app.config.appTelemetryPort);
 };
 
 const stop = function() {

@@ -14,9 +14,9 @@ module.exports = function() {
 
     electronMain.ipcMain.handle(`getAppData`, async function() {
         const [routes, voices, commands] = await Promise.allSettled([
-            tryFetch(`${globalThis.app.url.api}/routes`),
-            tryFetch(`${globalThis.app.url.api}/voices`),
-            tryFetch(`${globalThis.app.url.api}/commands`)
+            tryFetch(`${globalThis.app.config.domainApi}/routes`),
+            tryFetch(`${globalThis.app.config.domainApi}/voices`),
+            tryFetch(`${globalThis.app.config.domainApi}/commands`)
         ]);
 
         if (routes.status !== `fulfilled` || !routes.value || voices.status !== `fulfilled` || !voices.value || commands.status !== `fulfilled` || !commands.value) {
@@ -88,7 +88,7 @@ module.exports = function() {
     });
 
     electronMain.ipcMain.handle(`sendRoute`, async function(event, route) {
-        return await tryFetch(`${globalThis.app.url.api}/route/suggest`, null, {
+        return await tryFetch(`${globalThis.app.config.domainApi}/route/suggest`, null, {
             method: `POST`,
             headers: {
                 [`Content-Type`]: `application/json`

@@ -14,8 +14,8 @@ const games = [
 
 
 export const setGame = async function(gameCode) {
-    if (globalThis.app.data.config.game !== gameCode) {
-        globalThis.app.data.config.game = gameCode;
+    if (globalThis.app.data.config.settingGame !== gameCode) {
+        globalThis.app.data.config.settingGame = gameCode;
         await window.electronAPI.setConfig(app.data.config);
     };
 
@@ -52,7 +52,7 @@ export const initGameModule = async function() {
         gameInputComponent.addOption(game[0], game[1]);
     };
 
-    await setGame(globalThis.app.data.config.game);
+    await setGame(globalThis.app.data.config.settingGame);
 
     gameInputComponent.addEventListener(`change`, async function() {
         await setGame(this.value);
