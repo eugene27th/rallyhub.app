@@ -1,4 +1,5 @@
 const electronMain = require(`electron/main`);
+const electronUpdater = require('electron-updater');
 
 if (!electronMain.app.requestSingleInstanceLock()) {
     return electronMain.app.quit();
@@ -7,25 +8,22 @@ if (!electronMain.app.requestSingleInstanceLock()) {
 const fs = require(`fs`);
 const path = require(`path`);
 
-const appLog = require(`./log`);
-const appStartup = require(`./startup`);
-const appHandlers = require(`./handlers`);
-
-const telemetryListen = require(`../telemetry/listen`);
-
 
 electronMain.app.whenReady().then(async function() {
     globalThis.app = {
-        url: {},
-        path: {},
-        telemetry: {}
+        version: electronMain.app.getVersion(),
+        path: {
+            resources: electronMain.app.getAppPath(),
+            documents: electronMain.app.getPath(`documents`),
+            log: path.join(electronMain.app.getPath(`userData`), `app.log`),
+            config: path.join(electronMain.app.getPath(`userData`), `config.json`)
+        }
     };
 
-    globalThis.app.path.root = electronMain.app.isPackaged ? path.dirname(process.resourcesPath) : electronMain.app.getAppPath();
-    globalThis.app.path.resources = electronMain.app.getAppPath();
-    globalThis.app.path.log = path.join(globalThis.app.path.root, `app.log`);
-    globalThis.app.path.config = path.join(globalThis.app.path.root, `config.json`);
-    globalThis.app.path.asar = path.join(globalThis.app.path.root, `resources`, `app.asar`);
+    const appUtils = require(path.join(globalThis.app.path.resources, `core`, `app`, `utils.js`));
+    const appHandlers = require(path.join(globalThis.app.path.resources, `core`, `app`, `handlers.js`));
+    const telemetrySetup = require(path.join(globalThis.app.path.resources, `core`, `telemetry`, `setup.js`));
+    const telemetryListen = require(path.join(globalThis.app.path.resources, `core`, `telemetry`, `listen.js`));
 
     globalThis.app.window = new electronMain.BrowserWindow({
         width: 1200,
@@ -34,20 +32,22 @@ electronMain.app.whenReady().then(async function() {
         resizable: false,
         useContentSize: true,
         titleBarStyle: `hidden`,
-        icon: path.join(globalThis.app.path.resources, `icon.png`),
+        icon: path.join(globalThis.app.path.resources, `icon.ico`),
         backgroundColor: `#2B2D31`,
         webPreferences: {
             nodeIntegration: true,
             backgroundThrottling: false,
-            preload: path.join(globalThis.app.path.resources, `window`, `preload.js`)
+            preload: path.join(globalThis.app.path.resources, `core`, `renderer`, `preload.js`)
         }
     });
 
-    globalThis.app.window.loadFile(path.join(globalThis.app.path.resources, `window`, `index.html`));
+    globalThis.app.window.loadFile(path.join(globalThis.app.path.resources, `core`, `renderer`, `index.html`));
     globalThis.app.window.removeMenu();
 
     if (!electronMain.app.isPackaged) {
-        globalThis.app.window.webContents.openDevTools({ activate: false });
+        globalThis.app.window.webContents.openDevTools({
+            activate: false
+        });
     };
 
     globalThis.app.window.once(`ready-to-show`, function() {
@@ -55,44 +55,71 @@ electronMain.app.whenReady().then(async function() {
         globalThis.app.window.focus();
     });
 
-    const startupPromise = appStartup();
-
     globalThis.app.window.webContents.on(`did-finish-load`, async function() {
         appHandlers();
 
-        let startupStatus;
+        try {
+            if (fs.existsSync(globalThis.app.path.log) && fs.statSync(globalThis.app.path.log).size > (2 * 1024 * 1024)) {
+                fs.writeFileSync(globalThis.app.path.log, ``);
+            } else {
+                fs.appendFileSync(globalThis.app.path.log, `\n`);
+            };
+        } catch (error) {
+            appUtils.writeLog(`Ошибка при инициализации лог файла приложения. Ошибка: ${error.name}: ${error.message}.`);
+            globalThis.app.window.webContents.send(`startupStatus`, `fileSystemError`);
+            return;
+        };
+
+        appUtils.writeLog(`Запуск приложения.`);
 
         try {
-            startupStatus = await startupPromise;
-        } catch (error) {
-            appLog(`Ошибка при старте приложения: ${error.stack || error}.`);
+            const defaultConfig = require(path.join(globalThis.app.path.resources, `config.default.json`));
 
-            startupStatus = {
-                code: `startupError`
+            if (fs.existsSync(globalThis.app.path.config)) {
+                globalThis.app.config = JSON.parse(fs.readFileSync(globalThis.app.path.config));
+
+                for (const key of Object.keys(defaultConfig)) {
+                    if (globalThis.app.config[key] === undefined) {
+                        appUtils.writeLog(`Не найден необходимый ключ "${key}" в конфигурационном файле приложения. Возвращена конфигурация по-умолчанию.`);
+                        globalThis.app.config = defaultConfig;
+                        break;
+                    };
+                };
+            } else {
+                fs.writeFileSync(globalThis.app.path.config, JSON.stringify(defaultConfig, null, 4));
+                globalThis.app.config = defaultConfig;
             };
+        } catch (error) {
+            appUtils.writeLog(`Ошибка при инициализации конфигурационного файла приложения. Ошибка: ${error.name}: ${error.message}.`);
+            globalThis.app.window.webContents.send(`startupStatus`, `fileSystemError`);
+            return;
         };
 
-        if (startupStatus.code === `restartRequired`) {
-            electronMain.app.relaunch();
-            return electronMain.app.exit();
+        try {
+            const updateResult = await electronUpdater.autoUpdater.checkForUpdates();
+
+            if (updateResult?.isUpdateAvailable) {
+                await updateResult.downloadPromise;
+                electronUpdater.autoUpdater.quitAndInstall();
+                return;
+            };
+        } catch (error) {
+            appUtils.writeLog(`Ошибка при обновлении приложения: ${error}.`);
+            globalThis.app.window.webContents.send(`startupStatus`, `updateError`);
+            return;
         };
 
-        if (startupStatus.code === `appReady`) {
-            telemetryListen.start();
-        };
+        telemetrySetup.drt20();
+        telemetrySetup.wrc23();
+        telemetrySetup.acr25();
+        telemetryListen.start();
 
-        globalThis.app.window.webContents.send(`startupStatus`, startupStatus.code);
+        globalThis.app.window.webContents.send(`startupStatus`, `appReady`);
     });
 
     globalThis.app.window.on(`closed`, function() {
         telemetryListen.stop();
-
-        try {
-            fs.writeFileSync(globalThis.app.path.config, JSON.stringify(globalThis.app.config, null, 4));
-        } catch (error) {
-            appLog(`Ошибка при записи конфигурационного файла приложения. Путь: "${globalThis.app.path.config}". Код: ${error.code}.`);
-        };
-
+        appUtils.saveConfig();
         electronMain.app.quit();
     });
 });

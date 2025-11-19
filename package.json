@@ -1,24 +1,40 @@
 {
+    "version": "1.1.0",
     "name": "rallyhub",
     "author": "eugene27th",
-    "version": "1.1.0",
-    "main": "./core/app/index.js",
+    "main": "core/app/index.js",
     "scripts": {
         "start": "electron .",
-        "pack": "electron-builder --dir",
-        "dist": "electron-builder"
+        "pack": "electron-builder --win"
     },
     "dependencies": {
-        "binary-parser": "^2.2.1"
+        "binary-parser": "^2.2.1",
+        "electron-updater": "^6.6.2"
     },
     "devDependencies": {
-        "electron": "^34.0.2",
+        "electron": "^39.2.2",
         "electron-builder": "^26.0.12"
     },
     "build": {
-        "appId": "27thsquad.rallyhub",
-        "extraFiles": [
-            "config.json"
+        "appId": "ru.rallyhub.desktop",
+        "productName": "rallyhub",
+        "win": {
+            "icon": "icon.ico",
+            "target": [
+                "nsis"
+            ]
+        },
+        "nsis": {
+            "oneClick": true,
+            "artifactName": "${productName}-setup-${version}.${ext}",
+            "installerIcon": "icon.ico",
+            "uninstallerIcon": "icon.ico"
+        },
+        "publish": [
+            {
+                "provider": "generic",
+                "url": "https://cdn.rallyhub.ru/app/updates/"
+            }
         ],
         "electronLanguages": [
             "en-US"

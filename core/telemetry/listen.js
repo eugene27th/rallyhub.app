@@ -1,12 +1,13 @@
+const path = require(`path`);
 const socket = require(`dgram`).createSocket(`udp4`);
 
-const appLog = require(`../app/log`);
-const telemetryParse = require(`./parse`);
+const appUtils = require(path.join(globalThis.app.path.resources, `core`, `app`, `utils.js`));
+const telemetryParse = require(path.join(globalThis.app.path.resources, `core`, `telemetry`, `parse.js`));
 
 
 const start = function() {
     socket.on(`message`, function(message) {
-        if (!telemetryParse[globalThis.app.config.settingGame] || globalThis.app.telemetry.await) {
+        if (!telemetryParse[globalThis.app.config.settingGame]) {
             return false;
         };
 
@@ -21,11 +22,11 @@ const start = function() {
 
     socket.on(`listening`, function() {
         const { address, port } = socket.address();
-        appLog(`Прослушивание сокета: "${address}:${port}".`);
+        appUtils.writeLog(`Прослушивание сокета: "${address}:${port}".`);
     });
 
     socket.on(`error`, function(error) {
-        appLog(`Ошибка прослушивания сокета. Ошибка: ${error.name}: ${error.message}.`);
+        appUtils.writeLog(`Ошибка прослушивания сокета. Ошибка: ${error.name}: ${error.message}.`);
         socket.close();
     });
 

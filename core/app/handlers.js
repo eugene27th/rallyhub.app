@@ -1,10 +1,10 @@
 const fs = require(`fs`);
+const path = require(`path`);
 
 const electron = require(`electron`);
 const electronMain = require(`electron/main`);
 
-const appLog = require(`./log`);
-const tryFetch = require(`./fetch`);
+const appUtils = require(path.join(globalThis.app.path.resources, `core`, `app`, `utils.js`));
 
 
 module.exports = function() {
@@ -14,9 +14,9 @@ module.exports = function() {
 
     electronMain.ipcMain.handle(`getAppData`, async function() {
         const [routes, voices, commands] = await Promise.allSettled([
-            tryFetch(`${globalThis.app.config.domainApi}/routes`),
-            tryFetch(`${globalThis.app.config.domainApi}/voices`),
-            tryFetch(`${globalThis.app.config.domainApi}/commands`)
+            appUtils.tryFetch(`${globalThis.app.config.domainApi}/routes`),
+            appUtils.tryFetch(`${globalThis.app.config.domainApi}/voices`),
+            appUtils.tryFetch(`${globalThis.app.config.domainApi}/commands`)
         ]);
 
         if (routes.status !== `fulfilled` || !routes.value || voices.status !== `fulfilled` || !voices.value || commands.status !== `fulfilled` || !commands.value) {
@@ -26,6 +26,7 @@ module.exports = function() {
         };
 
         return {
+            version: globalThis.app.version,
             config: globalThis.app.config,
             routes: routes.value,
             voices: voices.value,
@@ -54,7 +55,7 @@ module.exports = function() {
             // todo: валидация файла
             return JSON.parse(fs.readFileSync(response.filePaths[0]));
         } catch (error) {
-            appLog(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
+            appUtils.writeLog(`Ошибка при открытии/парсинге файла. Путь: "${response.filePaths[0]}". Код: ${error.code || `PARSE`}.`);
             return null;
         };
     });
@@ -80,7 +81,7 @@ module.exports = function() {
         try {
             fs.writeFileSync(response.filePath, JSON.stringify(route, null, 4));
         } catch (error) {
-            appLog(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}". Код: ${error.code}.`);
+            appUtils.writeLog(`Ошибка при записи файла спецучастка. Путь: "${response.filePath}". Код: ${error.code}.`);
             return false;
         };
 
@@ -88,7 +89,7 @@ module.exports = function() {
     });
 
     electronMain.ipcMain.handle(`sendRoute`, async function(event, route) {
-        return await tryFetch(`${globalThis.app.config.domainApi}/route/suggest`, null, {
+        return await appUtils.tryFetch(`${globalThis.app.config.domainApi}/route/suggest`, null, {
             method: `POST`,
             headers: {
                 [`Content-Type`]: `application/json`

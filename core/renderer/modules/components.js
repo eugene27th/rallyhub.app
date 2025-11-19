@@ -3,11 +3,11 @@ export const registerComponent = async function(name) {
         return;
     };
 
-    const html = await (await fetch(`../window/components/${name}/index.html`)).text();
+    const html = await (await fetch(`../renderer/components/${name}/index.html`)).text();
 
     const link = document.createElement(`link`);
     link.rel = `stylesheet`;
-    link.href = `../window/components/${name}/index.css`;
+    link.href = `../renderer/components/${name}/index.css`;
 
     document.head.appendChild(link);
 

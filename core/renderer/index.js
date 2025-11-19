@@ -24,7 +24,7 @@ globalThis.app = {
 
 
 window.electronAPI.onStartupStatus(async function(code) {
-    console.log(code);
+    console.log(`debug:`, code);
 
     document.getElementById(`minimizeWindow`).addEventListener(`click`, async function() {
         await window.electronAPI.minimizeWindow();
@@ -53,9 +53,9 @@ window.electronAPI.onStartupStatus(async function(code) {
     await registerComponent(`list-all-commands`);
     await registerComponent(`list-waypoint-commands`);
 
-    document.getElementById(`headerVersionElement`).innerText = globalThis.app.data.config.appVersion;
+    document.getElementById(`headerVersionElement`).innerText = globalThis.app.data.version;
 
-    console.log(globalThis.app.data);
+    console.log(`debug:`, globalThis.app.data);
 
     await initGameModule();
     await initAudioModule();

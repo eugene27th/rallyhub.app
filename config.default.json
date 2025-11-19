@@ -1,5 +1,4 @@
 {
-    "appVersion": "1.1.0-rc0",
     "appTelemetryPort": 20220,
     "domainApi": "https://api-beta.rallyhub.ru",
     "domainCdn": "https://cdn.rallyhub.ru",
