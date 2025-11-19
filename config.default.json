@@ -1,6 +1,6 @@
 {
     "appTelemetryPort": 20220,
-    "domainApi": "https://api-beta.rallyhub.ru",
+    "domainApi": "https://api.rallyhub.ru",
     "domainCdn": "https://cdn.rallyhub.ru",
     "domainSite": "https://rallyhub.ru",
     "settingGame": "wrc23",
