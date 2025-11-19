@@ -10,12 +10,6 @@ import { initTelemetryModule } from "./modules/telemetry.js";
 
 
 globalThis.app = {
-    data: {
-        config: {},
-        routes: [],
-        voices: [],
-        commands: []
-    },
     editor: {
         route: null,
         waypoint: null

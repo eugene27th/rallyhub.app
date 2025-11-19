@@ -7,7 +7,7 @@ const waypointCurrentDistanceInput = document.getElementById(`waypointCurrentDis
 const waypointCommandsListComponent = document.getElementById(`waypointCommandsListComponent`);
 
 const games = [
-    [`acr25`, `Assetto Corsa Rally`],
+    // [`acr25`, `Assetto Corsa Rally`],
     [`wrc23`, `EA SPORTS WRC`],
     [`drt20`, `DiRT Rally 2.0`]
 ];
