@@ -1,6 +1,7 @@
 const preloaderElement = document.querySelector(`.preloader`);
 const preloaderImageElement = document.querySelector(`.preloader .center svg`);
 const preloaderMessageElement = document.querySelector(`.preloader .center .message`);
+const preloaderLinkElement = document.querySelector(`.preloader .bottom a`)
 
 const errorMessages = {
     networkError: `Не удалось подключиться к серверу.<br>Проверьте интернет-соединение и попробуйте снова.`,
@@ -23,3 +24,8 @@ export const removePreloader = function() {
         preloaderElement.remove();
     }, 250);
 };
+
+
+preloaderLinkElement.addEventListener(`click`, async function() {
+    await window.electronAPI.openExternalLink(`https://rallyhub.ru`);
+});

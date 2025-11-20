@@ -2,7 +2,6 @@
     "appTelemetryPort": 20220,
     "domainApi": "https://api.rallyhub.ru",
     "domainCdn": "https://cdn.rallyhub.ru",
-    "domainSite": "https://rallyhub.ru",
     "settingGame": "wrc23",
     "settingVoice": 1,
     "settingPlaybackRate": 100,
