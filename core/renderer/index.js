@@ -1,5 +1,5 @@
 import { registerComponent } from "./modules/components.js";
-import { setPreloaderError, removePreloader } from "./modules/preloader.js";
+import { setPreloaderError, setPreloaderMessage, removePreloader } from "./modules/preloader.js";
 import { initGameModule } from "./modules/game.js";
 import { initAudioModule } from "./modules/audio.js";
 import { initLocationsModule } from "./modules/locations.js";
@@ -18,7 +18,7 @@ globalThis.app = {
 
 
 window.electronAPI.onStartupStatus(async function(code) {
-    console.log(`debug:`, code);
+    console.log(`[debug] startupCode: ${code}`);
 
     document.getElementById(`minimizeWindow`).addEventListener(`click`, async function() {
         await window.electronAPI.minimizeWindow();
@@ -28,12 +28,19 @@ window.electronAPI.onStartupStatus(async function(code) {
         await window.electronAPI.closeWindow();
     });
 
+    if (code === `appUpdate`) {
+        setPreloaderMessage(`Приложение обновляется.<br>Пожалуйста, подождите немного.`);
+        return;
+    };
+
     if (code !== `appReady`) {
         setPreloaderError(code);
         return;
     };
 
     globalThis.app.data = await window.electronAPI.getAppData();
+
+    console.log(`[debug] appData:`, globalThis.app.data);
 
     if (globalThis.app.data.error) {
         setPreloaderError(globalThis.app.data.error);
@@ -48,8 +55,6 @@ window.electronAPI.onStartupStatus(async function(code) {
     await registerComponent(`list-waypoint-commands`);
 
     document.getElementById(`headerVersionElement`).innerText = globalThis.app.data.version;
-
-    console.log(`debug:`, globalThis.app.data);
 
     await initGameModule();
     await initAudioModule();

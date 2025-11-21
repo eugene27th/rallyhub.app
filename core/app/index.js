@@ -98,7 +98,8 @@ electronMain.app.whenReady().then(async function() {
         try {
             const updateResult = await electronUpdater.autoUpdater.checkForUpdates();
 
-            if (updateResult?.isUpdateAvailable) {
+            if (updateResult?.isUpdateAvailable && updateResult?.downloadPromise) {
+                globalThis.app.window.webContents.send(`startupStatus`, `appUpdate`);
                 await updateResult.downloadPromise;
                 electronUpdater.autoUpdater.quitAndInstall();
                 return;

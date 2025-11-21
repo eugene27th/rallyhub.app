@@ -17,6 +17,10 @@ export const setPreloaderError = function(errorCode) {
     preloaderMessageElement.innerHTML = errorMessages[errorCode] || errorMessages.unknownError;
 };
 
+export const setPreloaderMessage = function(message) {
+    preloaderMessageElement.innerHTML = message;
+};
+
 export const removePreloader = function() {
     preloaderElement.style.opacity = `0`;
 
