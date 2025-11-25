@@ -49,7 +49,11 @@ export const initRoutesModule = function() {
     });
 
     openRouteButton.addEventListener(`click`, async function(event) {
+        event.target.disabled = true;
+
         const importedRoute = await window.electronAPI.openRoute();
+
+        event.target.disabled = false;
 
         if (!importedRoute) {
             return;
@@ -58,8 +62,6 @@ export const initRoutesModule = function() {
         await setGame(importedRoute.game.code);
         setLocation(importedRoute.location);
         setRoute(importedRoute.id, importedRoute);
-
-        event.target.disabled = false;
     });
 
     saveRouteButton.addEventListener(`click`, async function(event) {
@@ -80,17 +82,20 @@ export const initRoutesModule = function() {
         };
 
         event.target.disabled = true;
-
         event.target.innerText = `Отправка...`;
 
-        const responseStatus = await window.electronAPI.sendRoute({
+        const response = await window.electronAPI.sendRoute({
             route: {
                 id: globalThis.app.editor.route.id
             },
             pacenote: globalThis.app.editor.route.pacenote
         });
 
-        event.target.innerText = responseStatus !== false ? `Отправлено` : `Ошибка`;
+        if (response.ok) {
+            event.target.innerText = `Отправлено`;
+        } else {
+            event.target.innerText = response.status === 429 ? `Превышен лимит` : `Ошибка`;
+        };
 
         setTimeout(function() {
             event.target.disabled = false;

@@ -1,7 +1,7 @@
 const fs = require(`fs`);
 
 
-const tryFetch = async function(url, parse = `json`, options = {}, retries = 3) {
+const tryFetch = async function(url, options = {}, retries = 3) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         const controller = new AbortController();
 
@@ -16,28 +16,27 @@ const tryFetch = async function(url, parse = `json`, options = {}, retries = 3) 
             });
 
             if (!response.ok) {
-                writeLog(`Не удалось получить ответ. Путь: "${url}". Статус: ${response.status}.`);
-                return false;
+                writeLog(`Некорректный статус ответа. Путь: "${url}". Статус: ${response.status}.`);
+
+                return {
+                    ok: false,
+                    status: response.status
+                };
             };
 
-            if (parse === `json`) {
-                return await response.json();
+            return {
+                ok: true,
+                status: response.status,
+                result: response.status === 200 ? await response.json() : null
             };
-
-            if (parse === `text`) {
-                return await response.text();
-            };
-
-            if (parse === `buffer`) {
-                return await response.arrayBuffer();
-            };
-
-            return null;
         } catch (error) {
             writeLog(`Ошибка при выполнении запроса. Путь: "${url}". Ошибка: ${error.name}: ${error.message}.${error.cause?.code ? ` Код: ${error.cause.code}.` : ``} Попытка: ${attempt}/${retries}.`);
 
             if (attempt === retries) {
-                return false;
+                return {
+                    ok: false,
+                    error: true
+                };
             };
 
             await new Promise(function(resolve) {

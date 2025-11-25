@@ -102,6 +102,11 @@ button {
     &:hover {
         background-color: var(--color-button-background-hover);
     }
+
+    &[disabled] {
+        opacity: 0.5;
+        pointer-events: none;
+    }
 }
 
 

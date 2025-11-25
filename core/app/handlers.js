@@ -19,7 +19,11 @@ module.exports = function() {
             appUtils.tryFetch(`${globalThis.app.config.domainApi}/commands`)
         ]);
 
-        if (routes.status !== `fulfilled` || !routes.value || voices.status !== `fulfilled` || !voices.value || commands.status !== `fulfilled` || !commands.value) {
+        if (
+            routes.status !== `fulfilled` || !routes.value || !routes.value.ok || !routes.value.result ||
+            voices.status !== `fulfilled` || !voices.value || !voices.value.ok || !voices.value.result ||
+            commands.status !== `fulfilled` || !commands.value || !commands.value.ok || !commands.value.result
+        ) {
             return {
                 error: `networkError`
             };
@@ -28,9 +32,9 @@ module.exports = function() {
         return {
             version: globalThis.app.version,
             config: globalThis.app.config,
-            routes: routes.value,
-            voices: voices.value,
-            commands: commands.value
+            routes: routes.value.result,
+            voices: voices.value.result,
+            commands: commands.value.result
         };
     });
 
@@ -88,13 +92,13 @@ module.exports = function() {
         return true;
     });
 
-    electronMain.ipcMain.handle(`sendRoute`, async function(event, route) {
-        return await appUtils.tryFetch(`${globalThis.app.config.domainApi}/route/suggest`, null, {
+    electronMain.ipcMain.handle(`sendRoute`, async function(event, data) {
+        return await appUtils.tryFetch(`${globalThis.app.config.domainApi}/route/suggest`, {
             method: `POST`,
             headers: {
                 [`Content-Type`]: `application/json`
             },
-            body: JSON.stringify(route)
+            body: JSON.stringify(data)
         });
     });
 
