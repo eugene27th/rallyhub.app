@@ -1,5 +1,5 @@
 {
-    "version": "1.1.4",
+    "version": "1.1.5",
     "name": "rallyhub",
     "author": "eugene27th",
     "main": "core/app/index.js",
@@ -8,12 +8,12 @@
         "pack": "electron-builder --win"
     },
     "dependencies": {
-        "binary-parser": "^2.2.1",
-        "electron-updater": "^6.6.2"
+        "binary-parser": "^2.3.0",
+        "electron-updater": "^6.7.3"
     },
     "devDependencies": {
-        "electron": "^39.2.2",
-        "electron-builder": "^26.0.12"
+        "electron": "^40.1.0",
+        "electron-builder": "^26.7.0"
     },
     "build": {
         "appId": "ru.rallyhub.desktop",

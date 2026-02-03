@@ -24,7 +24,7 @@ const drt20 = function(buffer) {
             .floatle(`vehicle_suspension_position_rl`)
             .floatle(`vehicle_suspension_position_rr`)
             .floatle(`vehicle_suspension_position_fl`)
-            .floatle(`vehicle_suspension_position_fl`)
+            .floatle(`vehicle_suspension_position_fr`)
             .floatle(`vehicle_suspension_velocity_rl`)
             .floatle(`vehicle_suspension_velocity_rr`)
             .floatle(`vehicle_suspension_velocity_fl`)

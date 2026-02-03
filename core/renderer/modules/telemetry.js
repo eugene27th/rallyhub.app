@@ -33,6 +33,10 @@ const telemetryDefaultStage = {
 
 export const initTelemetryModule = function() {
     window.electronAPI.onGameTelemetry(function(telemetry) {
+        if (telemetryAwait) {
+            return;
+        };
+
         if (telemetryRoute.game?.id !== telemetry.stage.id || telemetryRoute.game?.code !== globalThis.app.data.config.settingGame) {
             telemetryAwait = true;
 

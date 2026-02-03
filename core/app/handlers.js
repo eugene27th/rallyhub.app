@@ -13,17 +13,13 @@ module.exports = function() {
     });
 
     electronMain.ipcMain.handle(`getAppData`, async function() {
-        const [routes, voices, commands] = await Promise.allSettled([
+        const [routes, voices, commands] = await Promise.all([
             appUtils.tryFetch(`${globalThis.app.config.domainApi}/routes`),
             appUtils.tryFetch(`${globalThis.app.config.domainApi}/voices`),
             appUtils.tryFetch(`${globalThis.app.config.domainApi}/commands`)
         ]);
 
-        if (
-            routes.status !== `fulfilled` || !routes.value || !routes.value.ok || !routes.value.result ||
-            voices.status !== `fulfilled` || !voices.value || !voices.value.ok || !voices.value.result ||
-            commands.status !== `fulfilled` || !commands.value || !commands.value.ok || !commands.value.result
-        ) {
+        if (!routes.ok || !routes.result || !voices.ok || !voices.result || !commands.ok || !commands.result) {
             return {
                 error: `networkError`
             };
@@ -32,9 +28,9 @@ module.exports = function() {
         return {
             version: globalThis.app.version,
             config: globalThis.app.config,
-            routes: routes.value.result,
-            voices: voices.value.result,
-            commands: commands.value.result
+            routes: routes.result,
+            voices: voices.result,
+            commands: commands.result
         };
     });
 
