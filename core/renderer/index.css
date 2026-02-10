@@ -154,22 +154,18 @@ header {
         
         flex: 1;
         gap: 40px;
+        font-size: 18px;
+        font-weight: 300;
         color: var(--color-main-font-secondary);
 
         .logo {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 300;
 
-            .name {
-                font-size: 18px;
+            .version {
+                font-size: 14px;
             }
-        }
-
-        .status {
-            font-size: 18px;
-            font-weight: 600;
         }
     }
 
@@ -313,11 +309,17 @@ main {
 
                 &:nth-child(3) {
                     input-range {
-                        width: 220px;
+                        width: 160px;
                     }
                 }
 
                 &:nth-child(4) {
+                    input-range {
+                        width: 260px;
+                    }
+                }
+
+                &:nth-child(5) {
                     flex: 1;
                 }
             }

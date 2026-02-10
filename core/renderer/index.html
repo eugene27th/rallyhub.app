@@ -56,12 +56,16 @@
                     </div>
                 </div>
                 <div class="block">
-                    <div class="name">Скорость воспроизведения</div>
-                    <input-range id="playbackRateInputComponent" min="100" max="150" step="1" value="100"></input-range>
+                    <div class="name">Скорость</div>
+                    <input-range id="playbackRateInputComponent" unit="%" min="100" max="150" step="1" value="100"></input-range>
+                </div>
+                <div class="block">
+                    <div class="name">Смещение</div>
+                    <input-range id="playbackOffsetInputComponent" unit="м" min="-100" max="100" step="1" value="0"></input-range>
                 </div>
                 <div class="block">
                     <div class="name">Громкость</div>
-                    <input-range id="playbackVolumeInputComponent" min="0" max="100" step="1" value="50"></input-range>
+                    <input-range id="playbackVolumeInputComponent" unit="%" min="0" max="100" step="1" value="50"></input-range>
                 </div>
             </div>
             <div class="section editor">

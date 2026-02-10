@@ -1,6 +1,7 @@
 const voiceInputComponent = document.getElementById(`voiceInputComponent`);
 const voiceListenButton = document.getElementById(`voiceListenButton`);
 const playbackRateInputComponent = document.getElementById(`playbackRateInputComponent`);
+const playbackOffsetInputComponent = document.getElementById(`playbackOffsetInputComponent`);
 const playbackVolumeInputComponent = document.getElementById(`playbackVolumeInputComponent`);
 
 const audioElement = new Audio();
@@ -28,6 +29,13 @@ const setVoice = async function(voiceId) {
 const setPlaybackRate = async function(value) {
     if (globalThis.app.data.config.settingPlaybackRate !== value) {
         globalThis.app.data.config.settingPlaybackRate = value;
+        await window.electronAPI.setConfig(app.data.config);
+    };
+};
+
+const setPlaybackOffset = async function(value) {
+    if (globalThis.app.data.config.settingPlaybackOffset !== value) {
+        globalThis.app.data.config.settingPlaybackOffset = value;
         await window.electronAPI.setConfig(app.data.config);
     };
 };
@@ -116,6 +124,7 @@ export const initAudioModule = async function() {
     setVoice(globalThis.app.data.config.settingVoice);
 
     playbackRateInputComponent.setValue(globalThis.app.data.config.settingPlaybackRate);
+    playbackOffsetInputComponent.setValue(globalThis.app.data.config.settingPlaybackOffset);
     playbackVolumeInputComponent.setValue(globalThis.app.data.config.settingPlaybackVolume);
 
     voiceInputComponent.addEventListener(`change`, async function() {
@@ -124,6 +133,10 @@ export const initAudioModule = async function() {
 
     playbackRateInputComponent.addEventListener(`input`, async function() {
         await setPlaybackRate(parseInt(this.value));
+    });
+
+    playbackOffsetInputComponent.addEventListener(`input`, async function() {
+        await setPlaybackOffset(parseInt(this.value));
     });
 
     playbackVolumeInputComponent.addEventListener(`input`, async function() {

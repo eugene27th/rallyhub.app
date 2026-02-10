@@ -1,9 +1,10 @@
 export function init(host) {
     const inputElement = host.querySelector(`input`);
     const valueElement = host.querySelector(`.value`);
+    const unitSymbol = host.getAttribute(`unit`);
 
     host.setValue = function(value) {
-        valueElement.innerText = `${value}%`;
+        valueElement.innerText = `${value}${unitSymbol}`;
 
         host.value = value;
         inputElement.value = value;
@@ -14,7 +15,7 @@ export function init(host) {
     };
 
     inputElement.addEventListener(`input`, async function() {
-        valueElement.innerText = `${this.value}%`;
+        valueElement.innerText = `${this.value}${unitSymbol}`;
 
         host.value = this.value;
 
@@ -31,5 +32,5 @@ export function init(host) {
         };
     };
 
-    valueElement.innerText = `${inputElement.value}%`;
+    valueElement.innerText = `${inputElement.value}${unitSymbol}`;
 };

@@ -71,7 +71,7 @@ export const initTelemetryModule = function() {
 
         const currentRoundDistance = telemetry.stage.distance > 0 ? Math.round(telemetry.stage.distance) : 0;
 
-        const statusText = `${telemetryRoute.location} • ${telemetryRoute.name} • ${currentRoundDistance}м`;
+        const statusText = `${telemetryRoute.location} - ${telemetryRoute.name} - ${currentRoundDistance}м / ${Math.round(telemetry.stage.length)}м`;
 
         if (headerStatusElement.innerText !== statusText) {
             headerStatusElement.innerText = statusText;
@@ -94,6 +94,10 @@ export const initTelemetryModule = function() {
             };
 
             telemetryStage.completedBriefing = true;
+        };
+
+        if (globalThis.app.data.config.settingPlaybackOffset !== 0 && telemetry.stage.distance > 50) {
+            telemetry.stage.distance += globalThis.app.data.config.settingPlaybackOffset;
         };
 
         const waypointsToBeVoiced = telemetryPacenote.filter(function(waypoint) {
