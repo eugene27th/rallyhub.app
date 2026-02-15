@@ -1,5 +1,6 @@
 import { setGame } from "./game.js";
 import { setLocation } from "./locations.js";
+import { resetNextWaypointIndex } from "./telemetry.js";
 
 
 const routesListComponent = document.getElementById(`routesListComponent`);
@@ -62,6 +63,8 @@ export const initRoutesModule = function() {
         await setGame(importedRoute.game.code);
         setLocation(importedRoute.location);
         setRoute(importedRoute.id, importedRoute);
+
+        resetNextWaypointIndex();
     });
 
     saveRouteButton.addEventListener(`click`, async function(event) {

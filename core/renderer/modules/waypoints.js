@@ -1,3 +1,6 @@
+import { resetNextWaypointIndex } from "./telemetry.js";
+
+
 const waypointsListComponent = document.getElementById(`waypointsListComponent`);
 const waypointCreateButton = document.getElementById(`waypointCreateButton`);
 const waypointNewDistanceInput = document.getElementById(`waypointNewDistanceInput`);
@@ -47,6 +50,8 @@ const createWaypoint = function() {
     });
 
     waypointsListComponent.addItem(waypointDistance, null, true);
+
+    resetNextWaypointIndex();
 };
 
 const deleteWaypoint = function() {
@@ -65,6 +70,8 @@ const deleteWaypoint = function() {
 
     globalThis.app.editor.route.pacenote.splice(waypointIndex, 1);
     globalThis.app.editor.waypoint = null;
+
+    resetNextWaypointIndex();
 };
 
 
@@ -89,13 +96,8 @@ export const initWaypointsModule = function() {
         };
     });
 
-    waypointCreateButton.addEventListener(`click`, function() {
-        createWaypoint();
-    });
-
-    waypointDeleteButton.addEventListener(`click`, function() {
-        deleteWaypoint();
-    });
+    waypointCreateButton.addEventListener(`click`, createWaypoint);
+    waypointDeleteButton.addEventListener(`click`, deleteWaypoint);
 
     waypointCurrentDistanceInput.addEventListener(`input`, function() {
         if (!globalThis.app.editor.waypoint || this.value.length < 1) {

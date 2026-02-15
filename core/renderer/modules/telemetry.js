@@ -30,6 +30,11 @@ const telemetryDefaultStage = {
 };
 
 
+export const resetNextWaypointIndex = function() {
+    telemetryStage.nextWaypointIndex = 0;  
+};
+
+
 export const initTelemetryModule = function() {
     window.electronAPI.onGameTelemetry(function(telemetry) {
         if (telemetryAwait) {
