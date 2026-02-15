@@ -47,12 +47,14 @@ window.electronAPI.onStartupStatus(async function(code) {
         return;
     };
 
-    await registerComponent(`input-range`);
-    await registerComponent(`input-select`);
-    await registerComponent(`list-routes`);
-    await registerComponent(`list-waypoints`);
-    await registerComponent(`list-all-commands`);
-    await registerComponent(`list-waypoint-commands`);
+    await Promise.all([
+        registerComponent(`input-range`),
+        registerComponent(`input-select`),
+        registerComponent(`list-routes`),
+        registerComponent(`list-waypoints`),
+        registerComponent(`list-all-commands`),
+        registerComponent(`list-waypoint-commands`)
+    ]);
 
     document.getElementById(`headerVersionElement`).innerText = globalThis.app.data.version;
 

@@ -13,11 +13,9 @@ const start = function() {
 
         const telemetry = telemetryParse[globalThis.app.config.settingGame](message);
 
-        if (!telemetry) {
-            return false;
+        if (telemetry) {
+            globalThis.app.window.webContents.send(`gameTelemetry`, telemetry);
         };
-
-        globalThis.app.window.webContents.send(`gameTelemetry`, telemetry);
     });
 
     socket.on(`listening`, function() {

@@ -10,8 +10,7 @@ let telemetryStage = {};
 let telemetryPacenote = {};
 
 const telemetryDefaultStage = {
-    completedBriefing: false,
-    completedWaypoints: [],
+    nextWaypointIndex: 0,
     vehicle: {
         tyres: {
             fl: {
@@ -65,7 +64,7 @@ export const initTelemetryModule = function() {
             return false;
         };
 
-        if (telemetry.stage.distance <= 0 && telemetryStage.completedWaypoints.length > 1) {
+        if (telemetry.stage.distance <= 0 && telemetryStage.nextWaypointIndex > 1) {
             telemetryStage = structuredClone(telemetryDefaultStage);
         };
 
@@ -79,40 +78,26 @@ export const initTelemetryModule = function() {
 
         waypointNewDistanceInput.value = currentRoundDistance;
 
-        let commandsToBeVoiced = [];
-
-        if (!telemetryStage.completedBriefing) {
-            if (telemetry.stage.distance <= 0) {
-                const briefingWaypoint = telemetryPacenote.find(function(i) {
-                    return i.distance === 0;
-                });
-
-                if (briefingWaypoint) {
-                    telemetryStage.completedWaypoints.push(briefingWaypoint.distance);
-                    commandsToBeVoiced = commandsToBeVoiced.concat(briefingWaypoint.commands);
-                };
-            };
-
-            telemetryStage.completedBriefing = true;
-        };
-
-        if (globalThis.app.data.config.settingPlaybackOffset !== 0 && telemetry.stage.distance > 50) {
+        if (globalThis.app.data.config.settingPlaybackOffset !== 0 && telemetry.stage.distance > Math.max(50, globalThis.app.data.config.settingPlaybackOffset)) {
             telemetry.stage.distance += globalThis.app.data.config.settingPlaybackOffset;
         };
 
-        const waypointsToBeVoiced = telemetryPacenote.filter(function(waypoint) {
-            return (
-                waypoint.distance > telemetry.stage.distance &&
-                waypoint.distance < (telemetry.stage.distance + 2) &&
-                !telemetryStage.completedWaypoints.includes(waypoint.distance)
-            );
-        });
+        let commandsToBeVoiced = [];
 
-        if (waypointsToBeVoiced.length > 0) {
-            for (const waypoint of waypointsToBeVoiced) {
-                telemetryStage.completedWaypoints.push(waypoint.distance);
-                commandsToBeVoiced = commandsToBeVoiced.concat(waypoint.commands);
+        for (let i = telemetryStage.nextWaypointIndex; i < telemetryPacenote.length; i++) {
+            const waypoint = telemetryPacenote[i];
+
+            if (telemetry.stage.distance > (waypoint.distance + 5)) {
+                telemetryStage.nextWaypointIndex = i + 1;
+                continue;
             };
+
+            if (waypoint.distance !== 0 && telemetry.stage.distance < (waypoint.distance - 2)) {
+                break;
+            };
+
+            commandsToBeVoiced = commandsToBeVoiced.concat(waypoint.commands);
+            telemetryStage.nextWaypointIndex = i + 1;
         };
 
         if (telemetry.vehicle?.tyres) {
