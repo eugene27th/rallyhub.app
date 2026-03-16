@@ -14,7 +14,7 @@ let audioWorkerPlaylist = [];
 const setVoice = async function(voiceId) {
     if (globalThis.app.data.config.settingVoice !== voiceId) {
         globalThis.app.data.config.settingVoice = voiceId;
-        await window.electronAPI.setConfig(app.data.config);
+        await window.electronAPI.setConfig(globalThis.app.data.config);
     };
 
     if (parseInt(voiceInputComponent.value) !== voiceId) {
@@ -29,21 +29,21 @@ const setVoice = async function(voiceId) {
 const setPlaybackRate = async function(value) {
     if (globalThis.app.data.config.settingPlaybackRate !== value) {
         globalThis.app.data.config.settingPlaybackRate = value;
-        await window.electronAPI.setConfig(app.data.config);
+        await window.electronAPI.setConfig(globalThis.app.data.config);
     };
 };
 
 const setPlaybackOffset = async function(value) {
     if (globalThis.app.data.config.settingPlaybackOffset !== value) {
         globalThis.app.data.config.settingPlaybackOffset = value;
-        await window.electronAPI.setConfig(app.data.config);
+        await window.electronAPI.setConfig(globalThis.app.data.config);
     };
 };
 
 const setPlaybackVolume = async function(value) {
     if (globalThis.app.data.config.settingPlaybackVolume !== value) {
         globalThis.app.data.config.settingPlaybackVolume = value;
-        await window.electronAPI.setConfig(app.data.config);
+        await window.electronAPI.setConfig(globalThis.app.data.config);
     };
 };
 

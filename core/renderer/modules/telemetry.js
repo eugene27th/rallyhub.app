@@ -7,11 +7,11 @@ const waypointNewDistanceInput = document.getElementById(`waypointNewDistanceInp
 let telemetryAwait = false;
 let telemetryRoute = {};
 let telemetryStage = {};
-let telemetryPacenote = {};
 
 const telemetryDefaultStage = {
+    hasStarted: false,
     nextWaypointIndex: 0,
-    vehicle: {
+    vehicleState: {
         tyres: {
             fl: {
                 state: 0
@@ -31,7 +31,7 @@ const telemetryDefaultStage = {
 
 
 export const resetNextWaypointIndex = function() {
-    telemetryStage.nextWaypointIndex = 0;  
+    telemetryStage.nextWaypointIndex = 0;
 };
 
 
@@ -63,28 +63,32 @@ export const initTelemetryModule = function() {
             telemetryAwait = false;
         };
 
-        telemetryPacenote = globalThis.app.editor.route?.game.id === telemetry.stage.id ? globalThis.app.editor.route.pacenote : telemetryRoute.pacenote;
+        const telemetryPacenote = globalThis.app.editor.route?.game.id === telemetry.stage.id ? globalThis.app.editor.route.pacenote : telemetryRoute.pacenote;
 
         if (!telemetryPacenote) {
             return false;
         };
 
-        if (telemetry.stage.distance <= 0 && telemetryStage.nextWaypointIndex > 1) {
+        const telemetryStageRoundDistance = Math.round(telemetry.stage.distance);
+
+        if (telemetryStageRoundDistance <= 0 && telemetryStage.hasStarted) {
             telemetryStage = structuredClone(telemetryDefaultStage);
         };
 
-        const currentRoundDistance = telemetry.stage.distance > 0 ? Math.round(telemetry.stage.distance) : 0;
+        if (telemetryStageRoundDistance > 0 && !telemetryStage.hasStarted) {
+            telemetryStage.hasStarted = true;
+        };
 
-        const statusText = `${telemetryRoute.location} - ${telemetryRoute.name} - ${currentRoundDistance}м / ${Math.round(telemetry.stage.length)}м`;
+        const statusText = `${telemetryRoute.location} - ${telemetryRoute.name} - ${telemetryStageRoundDistance}м / ${Math.round(telemetry.stage.length)}м`;
 
         if (headerStatusElement.innerText !== statusText) {
             headerStatusElement.innerText = statusText;
         };
 
-        waypointNewDistanceInput.value = currentRoundDistance;
+        waypointNewDistanceInput.value = telemetryStageRoundDistance;
 
-        if (globalThis.app.data.config.settingPlaybackOffset !== 0 && telemetry.stage.distance > Math.max(50, globalThis.app.data.config.settingPlaybackOffset)) {
-            telemetry.stage.distance += globalThis.app.data.config.settingPlaybackOffset;
+        if (globalThis.app.data.config.settingPlaybackOffset !== 0 && telemetryStageRoundDistance > Math.max(50, globalThis.app.data.config.settingPlaybackOffset)) {
+            telemetryStageRoundDistance += globalThis.app.data.config.settingPlaybackOffset;
         };
 
         let commandsToBeVoiced = [];
@@ -92,12 +96,12 @@ export const initTelemetryModule = function() {
         for (let i = telemetryStage.nextWaypointIndex; i < telemetryPacenote.length; i++) {
             const waypoint = telemetryPacenote[i];
 
-            if (telemetry.stage.distance > (waypoint.distance + 5)) {
+            if (telemetryStageRoundDistance > (waypoint.distance + 5)) {
                 telemetryStage.nextWaypointIndex = i + 1;
                 continue;
             };
 
-            if (waypoint.distance !== 0 && telemetry.stage.distance < (waypoint.distance - 2)) {
+            if (waypoint.distance !== 0 && telemetryStageRoundDistance < (waypoint.distance - 2)) {
                 break;
             };
 
@@ -107,12 +111,12 @@ export const initTelemetryModule = function() {
 
         if (telemetry.vehicle?.tyres) {
             for (const [tyre, data] of Object.entries(telemetry.vehicle.tyres)) {
-                if (telemetryStage.vehicle.tyres[tyre].state !== data.state) {
+                if (telemetryStage.vehicleState.tyres[tyre].state !== data.state) {
                     if (data.state === 1) {
                         commandsToBeVoiced.push(`puncture_${tyre}`);
                     };
 
-                    telemetryStage.vehicle.tyres[tyre].state = data.state;
+                    telemetryStage.vehicleState.tyres[tyre].state = data.state;
                 };
             };
         };

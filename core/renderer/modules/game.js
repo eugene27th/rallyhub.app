@@ -16,7 +16,7 @@ const games = [
 export const setGame = async function(gameCode) {
     if (globalThis.app.data.config.settingGame !== gameCode) {
         globalThis.app.data.config.settingGame = gameCode;
-        await window.electronAPI.setConfig(app.data.config);
+        await window.electronAPI.setConfig(globalThis.app.data.config);
     };
 
     if (gameInputComponent.value !== gameCode) {
