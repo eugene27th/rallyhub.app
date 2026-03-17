@@ -69,7 +69,7 @@ export const initTelemetryModule = function() {
             return false;
         };
 
-        const telemetryStageRoundDistance = Math.round(telemetry.stage.distance);
+        let telemetryStageRoundDistance = Math.round(telemetry.stage.distance);
 
         if (telemetryStageRoundDistance <= 0 && telemetryStage.hasStarted) {
             telemetryStage = structuredClone(telemetryDefaultStage);
